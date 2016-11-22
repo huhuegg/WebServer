@@ -11,7 +11,7 @@ import PerfectHTTP
 class RedisHandler:HttpHandler {
     
     class func doSet(request: HTTPRequest, _ response: HTTPResponse) {
-        print("🌐\(#function) uri:\(request.uri)")
+        print("🌐  \(#function) uri:\(request.uri)")
         guard let key = valueForKey(request: request, key: "key"), let value = valueForKey(request: request, key: "value") else {
             responseReq(response: response, returnCode: .parmarError, errMsg: "params error(\(request.params()))", data: nil)
             return
@@ -25,7 +25,7 @@ class RedisHandler:HttpHandler {
     }
 
     class func doGet(request: HTTPRequest, _ response: HTTPResponse) {
-        print("🌐\(#function) uri:\(request.uri)")
+        print("🌐  \(#function) uri:\(request.uri)")
         guard let key = valueForKey(request: request, key: "key") else {
             responseReq(response: response, returnCode: .parmarError, errMsg: "params error(\(request.params()))", data: nil)
             return

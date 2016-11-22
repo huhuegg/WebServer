@@ -32,7 +32,7 @@ class HttpHandler:NetworkHandler {
         } catch _ {
         }
         response.appendBody(string: bodyJson)
-        print("📄responseBody:\(bodyJson)")
+        print("📄  responseBody:\(bodyJson)")
         response.completed()
     }
 }
