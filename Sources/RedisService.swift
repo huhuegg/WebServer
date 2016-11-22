@@ -13,11 +13,8 @@ class RedisService {
         RedisClient.getClient(withIdentifier: RedisClientIdentifier()) {
             c in
             do {
-                if let client = try c() as? RedisClient {
-                    callback(client)
-                } else {
-                    callback(nil)
-                }
+                let client = try c()
+                callback(client)
             } catch {
                 print("❌ Connect redis server failed")
                 callback(nil)
