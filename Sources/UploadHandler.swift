@@ -73,9 +73,9 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
             let thisFile = File(upload.tmpFileName)
             do {
                 #if os(Linux)
-                    let uploadFileName = String(random() % 1000000000) + "." + upload.fileName.filePathExtension
+                    let uploadFileName = randomString() + "." + upload.fileName.filePathExtension
                 #else
-                    let uploadFileName = String(arc4random() % 1000000000) + "." + upload.fileName.filePathExtension
+                    let uploadFileName = randomString() + "." + upload.fileName.filePathExtension
                 #endif
 
                 print("💾  save upload file: \(upload.fileName) -> \(uploadFileName)")
@@ -91,4 +91,9 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
         
         HttpHandler.responseReq(response: response, returnCode: .success, errMsg: "success", data: ["downloads":downloads])
 	}
+    
+    func randomString() ->String {
+        //return String(random() % 1000000000)
+        return UUID().string
+    }
 }
