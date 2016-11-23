@@ -16,6 +16,7 @@ class HttpHandler:NetworkHandler {
                 return v
             }
         }
+        print("valueForKey:\(key) not found")
         return nil
     }
     
