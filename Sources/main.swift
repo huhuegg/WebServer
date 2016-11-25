@@ -42,10 +42,15 @@ let server = HTTPServer()
 
 // Register your own routes and handlers
 var routes = Routes()
+routes.add(method: .get, uri: "/uuid", handler: UUIDHandler.uuid)
+routes.add(method: .get, uri: "/noteCreate", handler: NoteHandler.create)
+
 routes.add(method: .get, uri: "/get", handler: RedisHandler.doGet)
 routes.add(method: .get, uri: "/set", handler: RedisHandler.doSet)
 
+//静态文件下载
 routes.add(method: .get, uri: "/download/**", handler: DownloadHandler.download)
+//文件上传
 routes.add(method: .post, uri: "/upload", handler: {(request: HTTPRequest, response: HTTPResponse) in
     print("🌐  \(#function) uri:\(request.uri)")
     let webRoot = request.documentRoot
@@ -53,6 +58,7 @@ routes.add(method: .post, uri: "/upload", handler: {(request: HTTPRequest, respo
     mustacheRequest(request: request, response: response, handler: UploadHandler(), templatePath: webRoot + "/response.mustache")
 })
 
+//文件上传测试页面
 routes.add(method: .get, uri: "/testUpload", handler: {(request: HTTPRequest, response: HTTPResponse) in
     response.status = .ok //200
     guard let type = HttpHandler.valueForKey(request: request, key: "type"), let sid = HttpHandler.valueForKey(request: request, key: "sid") else {
