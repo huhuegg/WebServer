@@ -10,7 +10,8 @@ import PerfectHTTP
 
 class HttpHandler:NetworkHandler {
     class func valueForKey(request:HTTPRequest, key:String) -> String? {
-        let params = request.queryParams
+        print("request:\(request)")
+        let params = request.params()
         for (k,v) in params {
             if k == key {
                 return v

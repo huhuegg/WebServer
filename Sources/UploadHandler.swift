@@ -41,7 +41,7 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
             HttpHandler.responseReq(response: response, returnCode: .parmarError, errMsg: "params error(\(request.params()))", data: nil)
             return
         }
-        
+        print("BODY:\n\(response.bodyBytes)\n<<<")
         guard let uploads = request.postFileUploads , uploads.count > 0 else {
             HttpHandler.responseReq(response: response, returnCode: .parmarError, errMsg: "upload file count error!", data: nil)
             return

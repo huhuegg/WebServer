@@ -7,6 +7,7 @@
 //
 
 import PerfectHTTP
+import PerfectLib
 
 class UDIDHandler: HttpHandler {
     class func udid(request: HTTPRequest, _ response: HTTPResponse) {

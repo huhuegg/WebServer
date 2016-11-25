@@ -42,7 +42,7 @@ let server = HTTPServer()
 
 // Register your own routes and handlers
 var routes = Routes()
-routes.add(method: .get, uri: "/udid", handler: UUIDHandler.udid)
+routes.add(method: .get, uri: "/udid", handler: UDIDHandler.udid)
 routes.add(method: .post, uri: "/noteCreate", handler: NoteHandler.create)
 
 routes.add(method: .get, uri: "/get", handler: RedisHandler.doGet)
