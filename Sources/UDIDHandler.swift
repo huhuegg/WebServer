@@ -8,9 +8,9 @@
 
 import PerfectHTTP
 
-class UUIDHandler: HttpHandler {
+class UDIDHandler: HttpHandler {
     class func udid(request: HTTPRequest, _ response: HTTPResponse) {
         print("🌐  \(#function) uri:\(request.uri)")
-        responseReq(response: response, returnCode: ReturnCode.success, errMsg: "", data: ["uuid":UUID().string])
+        responseReq(response: response, returnCode: ReturnCode.success, errMsg: "", data: ["udid":UUID().string])
     }
 }
