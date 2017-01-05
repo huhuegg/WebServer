@@ -37,20 +37,24 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
         let response = contxt.webResponse
     
         print("🌐  \(#function) uri:\(request.uri)")
-        guard let type = HttpHandler.valueForKey(request: request, key: "type"), let sid = HttpHandler.valueForKey(request: request, key: "sid") else {
+        guard let type = HttpHandler.valueForKey(request: request, key: "type"), let udid = HttpHandler.valueForKey(request: request, key: "udid") else {
             HttpHandler.responseReq(response: response, returnCode: .parmarError, errMsg: "params error(\(request.params()))", data: nil)
             return
         }
-        print("BODY:\n\(response.bodyBytes)\n<<<")
+
         guard let uploads = request.postFileUploads , uploads.count > 0 else {
             HttpHandler.responseReq(response: response, returnCode: .parmarError, errMsg: "upload file count error!", data: nil)
             return
         }
-        
+
         var downloads:Array<String> = Array()
         var ary = [[String:Any]]()
         
         for upload in uploads {
+            //post时body中混杂有param和file的时候，在uploads中会有fieldName==""的数据，上传文件时需过滤掉
+            if upload.fileName == "" {
+                break
+            }
             ary.append([
                 "fieldName": upload.fieldName,
                 "contentType": upload.contentType,
@@ -58,13 +62,13 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
                 "fileSize": upload.fileSize,
                 "tmpFileName": upload.tmpFileName
                 ])
-            //print("ary:\(ary)")
-            let userUploadDir = Dir(Dir.workingDir.path + "webroot/" + "uploads/" + type + "/" + sid)
+            print("ary:\(ary)")
+            let userUploadDir = Dir(Dir.workingDir.path + "webroot/" + "uploads/" + type + "/" + udid)
             
             do {
                 try userUploadDir.create()
             } catch {
-                print("#\(type)# create user:\(sid) upload dir failed:\(error)")
+                print("#\(type)# create udid:\(udid) upload dir failed:\(error)")
                 HttpHandler.responseReq(response: response, returnCode: .failed, errMsg: "create upload file dir error!", data: nil)
                 return
             }
@@ -72,15 +76,12 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
             // 将文件转移走，如果目标位置已经有同名文件则进行覆盖操作。
             let thisFile = File(upload.tmpFileName)
             do {
-                #if os(Linux)
-                    let uploadFileName = randomString() + "." + upload.fileName.filePathExtension
-                #else
-                    let uploadFileName = randomString() + "." + upload.fileName.filePathExtension
-                #endif
+
+                let uploadFileName = randomString() + "." + upload.fileName.filePathExtension
 
                 print("💾  save upload file: \(upload.fileName) -> \(uploadFileName)")
                 let _ = try thisFile.moveTo(path: userUploadDir.path + uploadFileName, overWrite: true)
-                let downloadPath = downloadHost + "/" + "download/" + type + "/" + sid + "/" + uploadFileName
+                let downloadPath = downloadHost + "/" + "download/" + type + "/" + udid + "/" + uploadFileName
                 downloads.append(downloadPath)
             } catch {
                 print(error)
@@ -93,7 +94,7 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
 	}
     
     func randomString() ->String {
-        //return String(random() % 1000000000)
         return UUID().string
     }
+
 }

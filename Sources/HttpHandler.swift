@@ -10,14 +10,24 @@ import PerfectHTTP
 
 class HttpHandler:NetworkHandler {
     class func valueForKey(request:HTTPRequest, key:String) -> String? {
-        print("request:\(request)")
-        let params = request.params()
-        for (k,v) in params {
-            if k == key {
-                return v
+        if request.method == .get {
+            let params = request.queryParams
+            for (k,v) in params {
+                if k == key {
+                    return v
+                }
             }
+            print("valueForKey:\(key) not found")
+        } else if request.method == .post {
+            
+            let params = request.params()
+            for (k,v) in params {
+                if k == key {
+                    return v
+                }
+            }
+            print("valueForKey:\(key) not found")
         }
-        print("valueForKey:\(key) not found")
         return nil
     }
     

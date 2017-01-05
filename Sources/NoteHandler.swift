@@ -11,6 +11,12 @@ import PerfectHTTP
 class NoteHandler: HttpHandler {
     class func create(request: HTTPRequest, _ response: HTTPResponse) {
         print("🌐  \(#function) uri:\(request.uri)")
+        if request.method == .get {
+            print("#GET#params:\(request.queryParams)")
+        } else {
+            print("#POST#params:\(request.params())")
+        }
+
         guard let type = valueForKey(request: request, key: "type"),
               let title = valueForKey(request: request, key: "title"),
               let info = valueForKey(request: request, key: "info"),
