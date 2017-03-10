@@ -22,6 +22,8 @@ import PerfectHTTP
 import PerfectHTTPServer
 import PerfectMustache
 
+Log.logger = SysLogger()
+
 // 创建路径用于存储上传文件
 let uploadDir = Dir(Dir.workingDir.path + "uploads")
 do {
@@ -42,8 +44,11 @@ let server = HTTPServer()
 
 // Register your own routes and handlers
 var routes = Routes()
+routes.add(method: .get, uri: "/error", handler: ErrorMessageHandler.error)
 routes.add(method: .get, uri: "/udid", handler: UDIDHandler.udid)
 routes.add(method: .post, uri: "/noteCreate", handler: NoteHandler.create)
+
+routes.add(method: .post, uri: "/error", handler: ErrorMessageHandler.error)
 
 routes.add(method: .get, uri: "/get", handler: RedisHandler.doGet)
 routes.add(method: .get, uri: "/set", handler: RedisHandler.doSet)
