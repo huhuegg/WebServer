@@ -21,6 +21,7 @@ import PerfectLib
 import PerfectHTTP
 import PerfectHTTPServer
 import PerfectMustache
+import PerfectWebSockets
 
 Log.logger = SysLogger()
 
@@ -85,6 +86,24 @@ routes.add(method: .get, uri: "/testUpload", handler: {(request: HTTPRequest, re
     response.completed()
 })
 
+//WebSocket
+routes.add(method: .get, uri: "/websocket", handler: {
+    request, response in
+    
+    // To add a WebSocket service, set the handler to WebSocketHandler.
+    // Provide your closure which will return your service handler.
+    WebSocketHandler(handlerProducer: {
+        (request: HTTPRequest, protocols: [String]) -> WebSocketSessionHandler? in
+        
+        // 检查客户端的protocols中是否包含指定内容
+        guard protocols.contains("X") else {
+            return nil
+        }
+        
+        // Return our service handler.
+        return WebSocketsHandler()
+    }).handleRequest(request: request, response: response)
+})
 
 // Add the routes to the server.
 server.addRoutes(routes)
