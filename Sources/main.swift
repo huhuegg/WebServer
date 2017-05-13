@@ -86,6 +86,30 @@ routes.add(method: .get, uri: "/testUpload", handler: {(request: HTTPRequest, re
     response.completed()
 })
 
+//test js
+routes.add(method: .get, uri: "/pdf.html", handler: {(request: HTTPRequest, response: HTTPResponse) in
+    response.status = .ok //200
+
+    
+    var body = ""
+    body += "<html><body>\n"
+    body += "<script src=\"//mozilla.github.io/pdf.js/build/pdf.js\"></script>\n"
+    body += "<div>\n"
+    body += "<button id=\"prev\">Previous</button>\n"
+    body += "<button id=\"next\">Next</button>\n"
+    body += "&nbsp; &nbsp;\n"
+    body += "<span>Page: <span id=\"page_num\"></span> / <span id=\"page_count\"></span></span>\n"
+    body += "</div>\n"
+    body += "<canvas id=\"the-canvas\"></canvas>\n"
+    body += "<script src=\"t1.js\"></script>\n"
+    body += "</body></html>\n"
+    
+    response.appendBody(string: body)
+    //print("#pdf.html#\n\(body)")
+    response.completed()
+})
+
+
 //WebSocket
 routes.add(method: .get, uri: "/websocket", handler: {
     request, response in

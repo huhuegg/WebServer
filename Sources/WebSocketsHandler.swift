@@ -10,7 +10,7 @@ import PerfectLib
 import PerfectWebSockets
 import PerfectHTTP
 
-let kWebsocketCommandName = "command"
+let kWebsocketCommandName = "cmd"
 let kWebsocketDataName = "data"
 let kWebsocketCodeName = "code"
 let kWebsocketMsgName = "msg"
@@ -50,19 +50,43 @@ class WebSocketsHandler: WebSocketSessionHandler {
             do {
                 if let decoded = try string.jsonDecode() as? [String:AnyObject] {
                     if let command = decoded[kWebsocketCommandName] as? Int, let data = decoded[kWebsocketDataName] as? [String:Any] {
-                        print("<---Client# command:\(command) data:\(data)")
-                        if command == WebSocketCommand.reqDeviceAdmin.rawValue {
-                            let respCommand = WebSocketCommand.respDeviceAdmin
-                            let pushCommand = WebSocketCommand.pushDeviceAdmin
-                            
-                            var respData:[String:Any] = [:]
-                            respData["a"]="a"
-                            respData["b"]=1
-                            respData["c"]=false
-                            
-                            self.sendMsg(request, socket: socket, command: respCommand, code: true, msg: "respCommand", data: respData)
-                            self.sendMsg(request, socket: socket, command: pushCommand, code: true, msg: "pushCommand", data: respData)
+                        guard let cmd = WebSocketCommand(rawValue: command) else {
+                            print("command:\(command) no defined")
+                            return
                         }
+                        print("<---Client# command:\(cmd) data:\(data)")
+                        
+                        switch cmd {
+                        case .reqUserStatusChange:
+                            guard let sessionId = data["sessionId"] as? String, let userSid = data["uid"] as? String, let online = data["online"] as? Int else {
+                                print("parms error");
+                                return
+                            }
+                            let respCommand = WebSocketCommand.respUserStatusChange
+                            let pushCommand = WebSocketCommand.pushUserStatusChange
+                            
+                            var d:Dictionary<String,Any> = Dictionary()
+                            d["uid"] = userSid
+                            self.sendMsg(request, socket: socket, command: respCommand, code: true, msg: "resp", data: d)
+                            self.sendMsg(request, socket: socket, command: pushCommand, code: true, msg: "push", data: d)
+                            break
+                        default:
+                            break
+                        }
+                        
+                        
+//                        if command == WebSocketCommand.reqDeviceAdmin.rawValue {
+//                            let respCommand = WebSocketCommand.respDeviceAdmin
+//                            let pushCommand = WebSocketCommand.pushDeviceAdmin
+//                            
+//                            var respData:[String:Any] = [:]
+//                            respData["a"]="a"
+//                            respData["b"]=1
+//                            respData["c"]=false
+//                            
+//                            self.sendMsg(request, socket: socket, command: respCommand, code: true, msg: "respCommand", data: respData)
+//                            self.sendMsg(request, socket: socket, command: pushCommand, code: true, msg: "pushCommand", data: respData)
+//                        }
                     } else {
                         print("reqMsg format error: \(string)")
                     }
