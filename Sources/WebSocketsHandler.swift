@@ -20,10 +20,11 @@ class WebSocketsHandler: WebSocketSessionHandler {
     
     // 连接建立后handleSession立即被调用
     func handleSession(request: HTTPRequest, socket: WebSocket) {
-        print(self)
+        //print(self)
         // 收取二进制消息[UInt8]
         socket.readBytesMessage { (bytes, op, fin) in
             guard let data = bytes else {
+                print("socket.close()")
                 socket.close()
                 return
             }
@@ -41,12 +42,13 @@ class WebSocketsHandler: WebSocketSessionHandler {
 
             // 当连接超时或网络错误时数据为nil，以此为依据关闭客户端socket
             guard let string = string else {
+                print("socket.close()")
                 socket.close()
                 return
             }
             
             // Print some information to the console for informational purposes.
-            print("Read msg: \(string) op: \(op) fin: \(fin)")
+            //print("Read msg: \(string) op: \(op) fin: \(fin)")
             do {
                 if let decoded = try string.jsonDecode() as? [String:AnyObject] {
                     if let command = decoded[kWebsocketCommandName] as? Int, let data = decoded[kWebsocketDataName] as? [String:Any] {
@@ -58,7 +60,7 @@ class WebSocketsHandler: WebSocketSessionHandler {
                         
                         switch cmd {
                         case .reqUserStatusChange:
-                            guard let sessionId = data["sessionId"] as? String, let userSid = data["uid"] as? String, let online = data["online"] as? Int else {
+                            guard let sessionId = data["sessionId"] as? String, let userSid = data["uid"] as? String, let online = data["online"] as? Bool else {
                                 print("parms error");
                                 return
                             }
@@ -67,6 +69,7 @@ class WebSocketsHandler: WebSocketSessionHandler {
                             
                             var d:Dictionary<String,Any> = Dictionary()
                             d["uid"] = userSid
+                            d["online"] = 1
                             self.sendMsg(request, socket: socket, command: respCommand, code: true, msg: "resp", data: d)
                             self.sendMsg(request, socket: socket, command: pushCommand, code: true, msg: "push", data: d)
                             break
