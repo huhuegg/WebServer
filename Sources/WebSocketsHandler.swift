@@ -20,19 +20,21 @@ class WebSocketsHandler: WebSocketSessionHandler {
     
     // 连接建立后handleSession立即被调用
     func handleSession(request: HTTPRequest, socket: WebSocket) {
-        //print(self)
+        WS.instance.addClientIfNeed(self, request: request, socket: socket)
+        
         // 收取二进制消息[UInt8]
         socket.readBytesMessage { (bytes, op, fin) in
-            guard let data = bytes else {
+            guard let _ = bytes else {
+                WS.instance.removeClient(socket)
                 print("socket.close()")
                 socket.close()
                 return
             }
-            print("Read data length: \(data.count) op: \(op) fin: \(fin)")
-            
-            socket.sendBinaryMessage(bytes: data, final: true, completion: {
-                
-            });
+//            print("Read data length: \(data.count) op: \(op) fin: \(fin)")
+//            
+//            socket.sendBinaryMessage(bytes: data, final: true, completion: {
+//                
+//            });
         }
 
         // 收取文本消息
@@ -42,7 +44,7 @@ class WebSocketsHandler: WebSocketSessionHandler {
 
             // 当连接超时或网络错误时数据为nil，以此为依据关闭客户端socket
             guard let string = string else {
-                print("socket.close()")
+                WS.instance.removeClient(socket)
                 socket.close()
                 return
             }
@@ -53,30 +55,11 @@ class WebSocketsHandler: WebSocketSessionHandler {
                 if let decoded = try string.jsonDecode() as? [String:AnyObject] {
                     if let command = decoded[kWebsocketCommandName] as? Int, let data = decoded[kWebsocketDataName] as? [String:Any] {
                         guard let cmd = WebSocketCommand(rawValue: command) else {
-                            print("command:\(command) no defined")
+                            print("<---Client:command\(command) not found, skip!")
                             return
                         }
                         print("<---Client# command:\(cmd) data:\(data)")
-                        
-                        switch cmd {
-                        case .reqUserStatusChange:
-                            guard let sessionId = data["sessionId"] as? String, let userSid = data["uid"] as? String, let online = data["online"] as? Bool else {
-                                print("parms error");
-                                return
-                            }
-                            let respCommand = WebSocketCommand.respUserStatusChange
-                            let pushCommand = WebSocketCommand.pushUserStatusChange
-                            
-                            var d:Dictionary<String,Any> = Dictionary()
-                            d["uid"] = userSid
-                            d["online"] = 1
-                            self.sendMsg(request, socket: socket, command: respCommand, code: true, msg: "resp", data: d)
-                            self.sendMsg(request, socket: socket, command: pushCommand, code: true, msg: "push", data: d)
-                            break
-                        default:
-                            break
-                        }
-                        
+                        WS.instance.processRequestMessage(socket, command: cmd, data: data)
                         
 //                        if command == WebSocketCommand.reqDeviceAdmin.rawValue {
 //                            let respCommand = WebSocketCommand.respDeviceAdmin
@@ -109,24 +92,9 @@ class WebSocketsHandler: WebSocketSessionHandler {
 
     }
     
-    func sendMsg(_ request: HTTPRequest, socket: WebSocket, command:WebSocketCommand, code:Bool, msg:String, data:[String:Any]?) {
-        var dict:[String:Any] = [:]
-        dict[kWebsocketCommandName] = command.rawValue
-        dict[kWebsocketCodeName] = 1
-        dict[kWebsocketMsgName] = msg
-        dict[kWebsocketDataName] = data
-        do {
-            let message = try dict.jsonEncodedString()
-            print("--->Client# \(message)")
-            socket.sendStringMessage(string: message, final: true) {
-                
-                // This callback is called once the message has been sent.
-                // Recurse to read and echo new message.
-                self.handleSession(request: request, socket: socket)
-            }
-        } catch  {
-            print("dict.jsonEncodedString failed")
-        }
-        
-    }
+    
+}
+
+extension WebSocketHandler {
+    
 }
