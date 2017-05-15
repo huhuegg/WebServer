@@ -10,7 +10,7 @@ import PerfectLib
 import PerfectWebSockets
 import PerfectHTTP
 
-let kWebsocketCommandName = "command"
+let kWebsocketCommandName = "cmd"
 let kWebsocketDataName = "data"
 let kWebsocketCodeName = "code"
 let kWebsocketMsgName = "msg"
@@ -20,18 +20,21 @@ class WebSocketsHandler: WebSocketSessionHandler {
     
     // 连接建立后handleSession立即被调用
     func handleSession(request: HTTPRequest, socket: WebSocket) {
-        print(self)
+        WS.instance.addClientIfNeed(self, request: request, socket: socket)
+        
         // 收取二进制消息[UInt8]
         socket.readBytesMessage { (bytes, op, fin) in
-            guard let data = bytes else {
+            guard let _ = bytes else {
+                WS.instance.removeClient(socket)
+                print("socket.close()")
                 socket.close()
                 return
             }
-            print("Read data length: \(data.count) op: \(op) fin: \(fin)")
-            
-            socket.sendBinaryMessage(bytes: data, final: true, completion: {
-                
-            });
+//            print("Read data length: \(data.count) op: \(op) fin: \(fin)")
+//            
+//            socket.sendBinaryMessage(bytes: data, final: true, completion: {
+//                
+//            });
         }
 
         // 收取文本消息
@@ -41,28 +44,35 @@ class WebSocketsHandler: WebSocketSessionHandler {
 
             // 当连接超时或网络错误时数据为nil，以此为依据关闭客户端socket
             guard let string = string else {
+                WS.instance.removeClient(socket)
                 socket.close()
                 return
             }
             
             // Print some information to the console for informational purposes.
-            print("Read msg: \(string) op: \(op) fin: \(fin)")
+            //print("Read msg: \(string) op: \(op) fin: \(fin)")
             do {
                 if let decoded = try string.jsonDecode() as? [String:AnyObject] {
                     if let command = decoded[kWebsocketCommandName] as? Int, let data = decoded[kWebsocketDataName] as? [String:Any] {
-                        print("<---Client# command:\(command) data:\(data)")
-                        if command == WebSocketCommand.reqDeviceAdmin.rawValue {
-                            let respCommand = WebSocketCommand.respDeviceAdmin
-                            let pushCommand = WebSocketCommand.pushDeviceAdmin
-                            
-                            var respData:[String:Any] = [:]
-                            respData["a"]="a"
-                            respData["b"]=1
-                            respData["c"]=false
-                            
-                            self.sendMsg(request, socket: socket, command: respCommand, code: true, msg: "respCommand", data: respData)
-                            self.sendMsg(request, socket: socket, command: pushCommand, code: true, msg: "pushCommand", data: respData)
+                        guard let cmd = WebSocketCommand(rawValue: command) else {
+                            print("<---Client:command\(command) not found, skip!")
+                            return
                         }
+                        print("<---Client# command:\(cmd) data:\(data)")
+                        WS.instance.processRequestMessage(socket, command: cmd, data: data)
+                        
+//                        if command == WebSocketCommand.reqDeviceAdmin.rawValue {
+//                            let respCommand = WebSocketCommand.respDeviceAdmin
+//                            let pushCommand = WebSocketCommand.pushDeviceAdmin
+//                            
+//                            var respData:[String:Any] = [:]
+//                            respData["a"]="a"
+//                            respData["b"]=1
+//                            respData["c"]=false
+//                            
+//                            self.sendMsg(request, socket: socket, command: respCommand, code: true, msg: "respCommand", data: respData)
+//                            self.sendMsg(request, socket: socket, command: pushCommand, code: true, msg: "pushCommand", data: respData)
+//                        }
                     } else {
                         print("reqMsg format error: \(string)")
                     }
@@ -82,24 +92,9 @@ class WebSocketsHandler: WebSocketSessionHandler {
 
     }
     
-    func sendMsg(_ request: HTTPRequest, socket: WebSocket, command:WebSocketCommand, code:Bool, msg:String, data:[String:Any]?) {
-        var dict:[String:Any] = [:]
-        dict[kWebsocketCommandName] = command.rawValue
-        dict[kWebsocketCodeName] = 1
-        dict[kWebsocketMsgName] = msg
-        dict[kWebsocketDataName] = data
-        do {
-            let message = try dict.jsonEncodedString()
-            print("--->Client# \(message)")
-            socket.sendStringMessage(string: message, final: true) {
-                
-                // This callback is called once the message has been sent.
-                // Recurse to read and echo new message.
-                self.handleSession(request: request, socket: socket)
-            }
-        } catch  {
-            print("dict.jsonEncodedString failed")
-        }
-        
-    }
+    
+}
+
+extension WebSocketHandler {
+    
 }
