@@ -26,6 +26,7 @@ extension WS {
             printLog("clientInfo.userInfo is nil")
             return false
         }
+        userInRoom[userInfo.userSid] = roomSid
         if let existRoom = findRoomIfExist(roomSid) {
             var isUserInRoom = false
             for u in existRoom.userList {
@@ -73,6 +74,7 @@ extension WS {
             printLog("removeUserFromRoom failed")
             return false
         }
+        userInRoom.removeValue(forKey: userInfo.userSid)
         return true
     }
 
@@ -81,6 +83,28 @@ extension WS {
             return room.userList
         }
         return []
+    }
+
+    func roomOtherUsers(_ socket:WebSocket, roomSid:String) ->[UserInfo] {
+        guard isClientExist(socket) else {
+            printLog("socket is not existed!")
+            return []
+        }
+        guard let clientInfo = clientInfo(socket) else {
+            printLog("socket client info not existed!")
+            return []
+        }
+        guard let userInfo = clientInfo.userInfo else {
+            printLog("clientInfo.userInfo is nil")
+            return []
+        }
+        var users:[UserInfo] = []
+        for u in roomUsers(socket, roomSid: roomSid) {
+            if u.userSid != userInfo.userSid {
+                users.append(u)
+            }
+        }
+        return users
     }
     
 }
@@ -106,7 +130,7 @@ extension WS {
                 break
             }
         }
-        if (userIndex > 0) {
+        if (userIndex >= 0) {
             q.dispatch {
                 self.printLog("remove user:\(userSid) from room:\(roomSid)")
                 room.userList.remove(at: userIndex)

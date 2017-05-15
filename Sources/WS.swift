@@ -20,6 +20,7 @@ class WS {
     
     var clients:Dictionary<Int,ClientInfo> = Dictionary()
     var rooms:Dictionary<String,Room> = Dictionary()
+    var userInRoom:Dictionary<String,String> = Dictionary()
     let q = Threading.getQueue(name: "#WS Thread#", type: Threading.QueueType.serial)
     
     

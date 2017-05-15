@@ -187,7 +187,7 @@ extension WS {
         var respData:[String:Any] = [:]
         respData["roomId"] = roomSid
         sendMsg(socket, command: respCmd!, code: code, msg: "", data: respData)
-        if let userList = roomUsers(socket, roomSid: roomSid) as? [UserInfo] {
+        if let userList = roomOtherUsers(socket, roomSid: roomSid) as? [UserInfo] {
             for u in userList {
                 if let userSocket = userSocket(u.userSid) {
                     var pushData:[String:Any] = [:]
@@ -208,6 +208,19 @@ extension WS {
             return
         }
         let status = leaveRoom(socket, roomSid: roomSid)
+        sendMsg(socket, command: respCmd!, code: status, msg: "", data: nil)
+        
+        if let userList = roomOtherUsers(socket, roomSid: roomSid) as? [UserInfo] {
+            for u in userList {
+                if let userSocket = userSocket(u.userSid) {
+                    var pushData:[String:Any] = [:]
+                    pushData["roomId"] = roomSid
+                    pushData["uid"] = socketUserSid(socket)
+
+                    sendMsg(userSocket, command: pushCmd!, code: true, msg: "", data: pushData)
+                }
+            }
+        }
     }
     
     private func reqRoomStart(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
@@ -222,7 +235,7 @@ extension WS {
     }
 }
 
-extension WS {
+extension WS {    
     fileprivate func sendMsg(_ socket: WebSocket, command:WebSocketCommand, code:Bool, msg:String, data:[String:Any]?) {
         var dict:[String:Any] = [:]
         dict[kWebsocketCommandName] = command.rawValue
