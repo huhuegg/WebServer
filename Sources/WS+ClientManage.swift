@@ -11,66 +11,92 @@ import PerfectThread
 import PerfectHTTP
 
 extension WS {
-    func isClientExist(_ socket:WebSocket) ->Bool {
-        let address:Int = socketMemoryAddress(socket)
-        if clients[address] == nil {
-            return false
-        }
-        return true
-    }
-    
-    func addClientIfNeed(_ handler:WebSocketSessionHandler, request: HTTPRequest, socket:WebSocket) {
-        if !isClientExist(socket) {
-            addClient(handler, request:request, socket:socket)
-        } else {
-            updateClientInfo(handler, request: request, socket:socket)
+    func isClientExist(_ socket:WebSocket, callback:@escaping (_ clientInfo:ClientInfo?)->()) {
+        q.dispatch {
+            self.clientInfo(socket, callback: { (clientInfo) in
+                callback(clientInfo)
+            })
         }
     }
     
-    func removeClient(_ socket:WebSocket) {
+    func addClientIfNeed(_ handler:WebSocketSessionHandler, request: HTTPRequest, socket:WebSocket, callback:@escaping (_ isSuccess:Bool)->()) {
+        isClientExist(socket) { (clientInfo) in
+            if let u = clientInfo?.userInfo {
+                self.updateClientInfo(handler, request: request, socket: socket, callback: { (isSuccess) in
+                    callback(isSuccess)
+                })
+            } else {
+                self.addClient(handler, request: request, socket: socket, callback: { (isSuccess) in
+                    callback(isSuccess)
+                })
+            }
+        }
+    }
+    
+    func removeClient(_ socket:WebSocket, callback:@escaping (_ isSuccess:Bool)->()) {
         let address:Int = socketMemoryAddress(socket)
         if let clientInfo:Dictionary<String,Any> = clients[address] as? Dictionary<String, Any> {
             print("delClient:\(address) userSid:\(clientInfo["userSid"])")
             q.dispatch {
-                self.clients.removeValue(forKey: address)
+                if let _ = self.clients.removeValue(forKey: address) {
+                    callback(true)
+                } else {
+                    callback(false)
+                }
             }
         }
 
     }
     
-    func clientInfo(_ socket:WebSocket) -> ClientInfo? {
-        let address:Int = socketMemoryAddress(socket)
-        if clients[address] == nil {
-            return nil
-            
+    func clientInfo(_ socket:WebSocket, callback:@escaping (_ clientInfo:ClientInfo?)->()) {
+        q.dispatch {
+            let address:Int = self.socketMemoryAddress(socket)
+            if let clientInfo = self.clients[address] {
+                callback(clientInfo)
+            } else {
+                callback(nil)
+            }
         }
-        return clients[address]
+        
     }
     
-    func userSocket(_ userSid:String) -> WebSocket? {
-        for address in clients.keys {
-            if let userInfo = clients[address]?.userInfo {
-                if userInfo.userSid == userSid {
-                    return clients[address]?.socket
+    func userOwnerSocket(_ userSid:String, callback:@escaping (_ socket:WebSocket?)->()) {
+        q.dispatch {
+            for address in self.clients.keys {
+                if let userInfo = self.clients[address]?.userInfo {
+                    if userInfo.userSid == userSid {
+                        if let socket = self.clients[address]?.socket {
+                            callback(socket)
+                            return
+                        } else {
+                            self.printLog("Socket not found!")
+                        }
+                    }
                 }
             }
+            callback(nil)
         }
-        return nil
     }
     
-    func socketUserSid(_ socket:WebSocket) -> String? {
-        return clientInfo(socket)?.userInfo?.userSid
+    func socketUserSid(_ socket:WebSocket, callback:@escaping (_ userSid:String?)->()){
+        clientInfo(socket) { (clientInfo) in
+            callback(clientInfo?.userInfo?.userSid)
+        }
     }
     
-    func updateUserInfo(_ socket:WebSocket, userInfo:UserInfo) {
+    func updateUserInfo(_ socket:WebSocket, userInfo:UserInfo, callback:@escaping (_ isSuccess:Bool)->()) {
         
-        if let clientInfo = clientInfo(socket) {
-            q.dispatch {
-                clientInfo.userInfo = userInfo
+        clientInfo(socket) { (clientInfo) in
+            if let c = clientInfo {
+                self.q.dispatch {
+                    self.printLog("updateUserInfo success")
+                    clientInfo?.userInfo = userInfo
+                    callback(true)
+                }
+            } else {
+                self.printLog("updateUserInfo failed")
+                callback(false)
             }
-            printLog("updateUserInfo success")
-        } else {
-            printLog("updateUserInfo failed")
         }
     }
 }
@@ -78,7 +104,7 @@ extension WS {
 extension WS {
     
     
-    fileprivate func addClient(_ handler:WebSocketSessionHandler, request: HTTPRequest, socket:WebSocket) {
+    fileprivate func addClient(_ handler:WebSocketSessionHandler, request: HTTPRequest, socket:WebSocket, callback:@escaping (_ isSuccess:Bool)->()) {
         let address:Int = socketMemoryAddress(socket)
         var clientInfo = ClientInfo()
         clientInfo.handler = handler
@@ -88,19 +114,26 @@ extension WS {
         print("addClient:\(address)")
         q.dispatch {
             self.clients[address] = clientInfo
+            callback(true)
         }
     }
     
-    fileprivate func updateClientInfo(_ handler:WebSocketSessionHandler, request: HTTPRequest, socket:WebSocket) {
-        if let clientInfo = clientInfo(socket) {
-            q.dispatch {
-                clientInfo.handler = handler
-                clientInfo.request = request
+    fileprivate func updateClientInfo(_ handler:WebSocketSessionHandler, request: HTTPRequest, socket:WebSocket, callback:@escaping (_ isSuccess:Bool)->()) {
+        clientInfo(socket) { (clientInfo) in
+            if let client = clientInfo {
+                self.q.dispatch {
+                    client.handler = handler
+                    client.request = request
+                    callback(true)
+                }
+            } else {
+                callback(false)
             }
         }
+
     }
     
-    fileprivate func socketMemoryAddress(_ socket:WebSocket) -> Int {
+    func socketMemoryAddress(_ socket:WebSocket) -> Int {
         return unsafeBitCast(socket, to: Int.self)
     }
 }

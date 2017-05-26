@@ -25,6 +25,8 @@ import PerfectWebSockets
 
 Log.logger = SysLogger()
 
+
+
 // 创建路径用于存储上传文件
 let uploadDir = Dir(Dir.workingDir.path + "uploads")
 do {
