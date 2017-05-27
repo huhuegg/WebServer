@@ -10,6 +10,7 @@ enum DataType {
     case string
     case dictStringAny
     case arryAny
+    case arrayString
     case int
     case double
     case bool
@@ -22,6 +23,8 @@ enum DataType {
             return "Dictionary<String,Any>"
         case .arryAny:
             return "Array<Any>"
+        case .arrayString:
+            return "Array<String>"
         case .int:
             return "Int"
         case .double:
@@ -72,6 +75,11 @@ class DataTypeCheck {
             break
         case .arryAny:
             if value is Array<Any> {
+                status = true
+            }
+            break
+        case .arrayString:
+            if value is Array<String> {
                 status = true
             }
             break

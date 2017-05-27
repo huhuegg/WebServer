@@ -31,7 +31,7 @@ extension WS {
                         self.q.dispatch {
                             if let existRoom = room {
                                 var isUserInRoom:Bool = false
-                                for (idx,value) in existRoom.userList.enumerated() {
+                                for (idx,_) in existRoom.userList.enumerated() {
                                     if existRoom.userList[idx].userSid == u.userSid {
                                         existRoom.userList[idx].role = roleId
                                         isUserInRoom = true
@@ -41,7 +41,7 @@ extension WS {
                                 }
                                 
                                 if !isUserInRoom {
-                                    var userInfo = u
+                                    let userInfo = u
                                     userInfo.role = roleId
                                     self.printLog("addUser:\(userInfo.userSid) role:\(roleId) into Room:\(roomSid)")
                                     existRoom.userList.append(userInfo)
@@ -51,7 +51,7 @@ extension WS {
                                 self.q.dispatch {
                                     let newRoom = Room()
                                     newRoom.sid = roomSid
-                                    var userInfo = u
+                                    let userInfo = u
                                     userInfo.role = roleId
                                     newRoom.userList.append(userInfo)
                                     self.rooms[roomSid] = newRoom
@@ -101,7 +101,6 @@ extension WS {
 
     func userRoom(_ userSid:String, callback:@escaping (_ room:Room?)->()) {
         q.dispatch {
-            var room:Room?
             if let roomSid = self.userInRoom[userSid] {
                 if let room = self.rooms[roomSid] {
                     callback(room)

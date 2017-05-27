@@ -26,7 +26,7 @@ class UserInfo {
             userInfo.nickName = d["nickname"] as! String
             userInfo.avatarUrl = d["avatar"] as! String
             userInfo.isOnline = d["online"] as! Bool
-            if let desc = d["online"] as? String {
+            if let desc = d["desc"] as? String {
                 userInfo.desc = desc
             }
             if let roleId = d["roleId"] as? Int {

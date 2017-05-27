@@ -21,7 +21,7 @@ extension WS {
     
     func addClientIfNeed(_ handler:WebSocketSessionHandler, request: HTTPRequest, socket:WebSocket, callback:@escaping (_ isSuccess:Bool)->()) {
         isClientExist(socket) { (clientInfo) in
-            if let u = clientInfo?.userInfo {
+            if let _ = clientInfo?.userInfo {
                 self.updateClientInfo(handler, request: request, socket: socket, callback: { (isSuccess) in
                     callback(isSuccess)
                 })
@@ -35,8 +35,8 @@ extension WS {
     
     func removeClient(_ socket:WebSocket, callback:@escaping (_ isSuccess:Bool)->()) {
         let address:Int = socketMemoryAddress(socket)
-        if let clientInfo:Dictionary<String,Any> = clients[address] as? Dictionary<String, Any> {
-            print("delClient:\(address) userSid:\(clientInfo["userSid"])")
+        if let u = clients[address]?.userInfo {
+            print("delClient:\(address) userSid:\(u.userSid)")
             q.dispatch {
                 if let _ = self.clients.removeValue(forKey: address) {
                     callback(true)
@@ -87,7 +87,7 @@ extension WS {
     func updateUserInfo(_ socket:WebSocket, userInfo:UserInfo, callback:@escaping (_ isSuccess:Bool)->()) {
         
         clientInfo(socket) { (clientInfo) in
-            if let c = clientInfo {
+            if let _ = clientInfo {
                 self.q.dispatch {
                     self.printLog("updateUserInfo success")
                     clientInfo?.userInfo = userInfo
@@ -106,7 +106,7 @@ extension WS {
     
     fileprivate func addClient(_ handler:WebSocketSessionHandler, request: HTTPRequest, socket:WebSocket, callback:@escaping (_ isSuccess:Bool)->()) {
         let address:Int = socketMemoryAddress(socket)
-        var clientInfo = ClientInfo()
+        let clientInfo = ClientInfo()
         clientInfo.handler = handler
         clientInfo.request = request
         clientInfo.socket = socket

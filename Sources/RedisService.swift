@@ -63,7 +63,7 @@ class RedisService {
                         return
                     }
                     let value = response.toString()
-                    print("get key:\(key) -> value:\(value)");
+                    print("get key:\(key) -> value:\(String(describing: value))");
                     callback(true,value)
                     RedisClient.releaseClient(c)
                 }

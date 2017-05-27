@@ -69,310 +69,423 @@ extension WS {
     
     
     private func reqDeviceAdmin(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        
-        guard let roomSid = data?["courseId"] as? String, let userSid = data?["uid"] as? String, let deviceId = data?["deviceId"] as? Int, let isOpen = data?["open"] as? Bool else {
-            printLog("data error! data:\(String(describing: data))")
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
 
-        sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "uid":.string, "deviceId":.int, "open":.bool])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqUserAnswerQuestion(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        
-        
-        guard let roomSid = data?["courseId"] as? String, let userSid = data?["uid"] as? String, let type = data?["type"] as? Int else {
-            printLog("data error! data:\(String(describing: data))")
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-
-        sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: roomSid, data: data)
+        
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "uid":.string, "type":.int])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
 
     }
     
     private func reqUserStatusChange(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
+            return
+        }
+        
+        let status = DataTypeCheck.dataCheck(data, types: ["uid":.string, "nickname":.string, "avatar":.string, "online":.bool])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        
         guard let userInfo = UserInfo.fromDict(data) else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
             return
         }
         updateUserInfo(socket, userInfo: userInfo) { (isSuccess) in
-            self.sendMsg(socket, command: respCmd!, code: isSuccess, msg: "", data: data)
+            self.sendMsg(socket, command: respCmd, code: isSuccess, msg: "", data: data)
         }
         
         userRoom(userInfo.userSid) { (room) in
             if let r = room {
-                self.sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: r.sid, data: data)
+                self.sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: r.sid, data: data)
             }
         }
 
     }
     
     private func reqCoursewareOpen(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let url = data?["url"] as? String else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "url":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
         
-        sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: roomSid, data: data)
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqCoursewareClose(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String  else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        
-        sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqCoursewareSizeChange(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        
-        guard let roomSid = data?["courseId"] as? String, let type = data?["type"] as? Int else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        
-        sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "type":.int])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
 
     }
     
     private func reqMessagewSend(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let message = data?["message"] as? String else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: nil)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "message":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+
         socketUserSid(socket) { (sendUserSid) in
             if let s = sendUserSid {
-                self.sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
                 
                 var pushData:[String:Any]? = data
-                pushData?["uid"] = sendUserSid
+                pushData?["uid"] = s
                 
-                self.sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: roomSid, data: pushData)
+                self.sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: pushData)
             } else {
-                self.sendMsg(socket, command: respCmd!, code: false, msg: "send user not online", data: data)
+                self.sendMsg(socket, command: respCmd, code: false, msg: "send user not online", data: data)
             }
         }
     }
     
     private func reqQuestionCreate(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let questionSid = data?["questionId"] else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "questionId":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqSpecifyStudentAnswerQuestion(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let questionSid = data?["questionId"], let users = data?["uidArr"] as? Array<String> else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "questionId":.string, "uidArr":.arrayString])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqAnswerCheck(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let userSid = data?["uid"] as? String, let result = data?["result"] as? Bool else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "uid":.string, "result":.bool])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+    
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
 
     }
     
     private func reqAnswerSubmit(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let questionSid = data?["questionId"], let answerArr = data?["answerArr"] as? Array<String> else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "questionId":.string, "answerArr":.arrayString])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqCreditChange(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let userSid = data?["uid"] as? String, let type = data?["type"] as? Int, let count = data?["count"] as? Int else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "uid":.string, "type":.int, "count":.int])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqPlayMediaSynchronously(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let type = data?["type"] as? Int, let url = data?["url"] as? String else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "type":.int, "url":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+
         socketUserSid(socket) { (userSid) in
             if let sid = userSid {
-                self.sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
                 var pushData:[String:Any]? = data
                 pushData?["uid"] = sid
-                self.sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: pushData)
+                self.sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: pushData)
             } else {
-                self.sendMsg(socket, command: respCmd!, code: false, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: false, msg: "", data: data)
             }
         }
     }
     
     private func reqMediaReady(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let mediaSid = data?["mediaId"] as? String, let type = data?["type"] as? Int, let status = data?["status"] as? Bool else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "mediaId":.string, "type":.int, "status":.bool])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
         
     }
     
     private func reqMediaControl(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let mediaSid = data?["mediaId"] as? String, let type = data?["type"] as? Int, let status = data?["status"] as? Int else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "mediaId":.string, "type":.int, "status":.bool])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
 
     }
     
     private func reqMediaControlStatus(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let mediaSid = data?["mediaId"] as? String, let type = data?["type"] as? Int, let status = data?["status"] as? Int else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "mediaId":.string, "type":.int, "status":.bool])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqDocumentOpenClose(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let documentSid = data?["documentId"] as? String, let isOpen = data?["type"] as? Bool, let url = data?["url"] as? String else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "documentId":.string, "type":.bool, "url":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqDocumentOpenCloseStatus(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-                
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let documentSid = data?["documentId"] as? String, let isOpen = data?["status"] as? Bool else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
+        
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "documentId":.string, "status":.int])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+
         socketUserSid(socket) { (userSid) in
             if let sid = userSid {
-                self.sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
                 var pushData:[String:Any]? = data
                 pushData?["uid"] = sid
-                self.sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: pushData)
+                self.sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: pushData)
             } else {
-                self.sendMsg(socket, command: respCmd!, code: false, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: false, msg: "", data: data)
             }
         }
     }
     
     private func reqDocumentControl(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let documentSid = data?["documentId"] as? String, let controlJson = data?["control"] as? [String:Any]? else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "documentId":.string, "control":.dictStringAny])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
     }
     
     private func reqDocumentControlStatus(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let coursewareSid = data?["coursewareId"] as? String, let documentSid = data?["documentId"] as? String, let controlJson = data?["control"] as? String else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
+        
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "coursewareId":.string, "documentId":.string, "control":.dictStringAny])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+
         socketUserSid(socket) { (userSid) in
             if let sid = userSid {
-                self.sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
                 var pushData:[String:Any]? = data
                 pushData?["uid"] = sid
-                self.sendMsgToRoomOtherUsers(socket , command: pushCmd!, roomSid: roomSid, data: pushData)
+                self.sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: pushData)
             } else {
-                self.sendMsg(socket, command: respCmd!, code: false, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: false, msg: "", data: data)
             }
         }
     }
     
     private func reqRoomJoin(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String, let roleId = data?["roleId"] as? Int else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
+        
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "roleId":.int])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        let roleId = data?["roleId"] as! Int
         
         isClientExist(socket) { (clientInfo) in
             if let u = clientInfo?.userInfo {
@@ -387,7 +500,7 @@ extension WS {
                         self.printLog("#####################################")
                         self.printLog("userNum:\(users.count) users:\(users)")
                         self.printLog("#####################################")
-                        self.sendMsg(socket, command: respCmd!, code: true, msg: "", data: respData)
+                        self.sendMsg(socket, command: respCmd, code: true, msg: "", data: respData)
                         
                         var pushData:[String:Any] = [:]
                         pushData["courseId"] = roomSid
@@ -396,82 +509,94 @@ extension WS {
                         pushData["nickname"] = u.nickName
                         pushData["avatar"] = u.avatarUrl
                         
-                        self.sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: r.sid, data: pushData)
+                        self.sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: r.sid, data: pushData)
                     } else {
-                        self.sendMsg(socket, command: respCmd!, code: false, msg: "joinRoom failed", data: data)
+                        self.sendMsg(socket, command: respCmd, code: false, msg: "joinRoom failed", data: data)
                     }
                 })
             } else {
-                self.sendMsg(socket, command: respCmd!, code: false, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: false, msg: "", data: data)
             }
         }
         
         socketUserSid(socket) { (userSid) in
             
-            if let sid = userSid {
-                
-
+            if let _ = userSid {
             } else {
-                self.sendMsg(socket, command: respCmd!, code: false, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: false, msg: "", data: data)
             }
         }
 
     }
     
     private func reqRoomLeave(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
+        
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
         
         isClientExist(socket, callback: { (clientInfo) in
             if let u = clientInfo?.userInfo {
                 self.leaveRoom(socket, roomSid: roomSid) { (isSuccess) in
-                    var msg = isSuccess ? "":"completeWithError"
-                    self.sendMsg(socket, command: respCmd!, code: true, msg: msg, data: data)
+                    let msg = isSuccess ? "":"completeWithError"
+                    self.sendMsg(socket, command: respCmd, code: true, msg: msg, data: data)
                     
                     var pushData = data
                     pushData?["uid"] = u.userSid
-                    self.sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: roomSid, data: pushData)
+                    self.sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: pushData)
                 }
             } else {
-                self.sendMsg(socket, command: respCmd!, code: false, msg: "clientInfo not found", data: data)
+                self.sendMsg(socket, command: respCmd, code: false, msg: "clientInfo not found", data: data)
             }
         })
 
     }
     
     private func reqRoomStart(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let roomSid = data?["courseId"] as? String else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
         
-        sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: roomSid, data: data)
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        
+        sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
     }
 
     
     private func reqRoomEnd(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
-        let respCmd = commandFor(cmd, isResp: true)
-        let pushCmd = commandFor(cmd, isResp: false)
-        guard let _ = respCmd, let _ = pushCmd else {
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
             printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
-        guard let roomSid = data?["courseId"] as? String else {
-            sendMsg(socket, command: respCmd!, code: false, msg: "data error!", data: data)
+        
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
             return
         }
+        let roomSid = data?["courseId"] as! String
         
-        sendMsg(socket, command: respCmd!, code: true, msg: "", data: data)
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
         
-        sendMsgToRoomOtherUsers(socket, command: pushCmd!, roomSid: roomSid, data: data)
+        sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
 
     }
 }
