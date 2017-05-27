@@ -36,8 +36,8 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
         let request = contxt.webRequest
         let response = contxt.webResponse
     
-        print("🌐  \(#function) uri:\(request.uri)")
-        guard let type = HttpHandler.valueForKey(request: request, key: "type"), let udid = HttpHandler.valueForKey(request: request, key: "udid") else {
+        //print("🌐  \(#function) uri:\(request.uri)")
+        guard let type = HttpHandler.valueForKey(request: request, key: "type"), let sid = HttpHandler.valueForKey(request: request, key: "sid") else {
             HttpHandler.responseReq(response: response, returnCode: .parmarError, errMsg: "params error(\(request.params()))", data: nil)
             return
         }
@@ -46,7 +46,7 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
             HttpHandler.responseReq(response: response, returnCode: .parmarError, errMsg: "upload file count error!", data: nil)
             return
         }
-
+        
         var downloads:Array<String> = Array()
         var ary = [[String:Any]]()
         
@@ -63,12 +63,13 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
                 "tmpFileName": upload.tmpFileName
                 ])
             print("ary:\(ary)")
-            let userUploadDir = Dir(Dir.workingDir.path + "webroot/" + "uploads/" + type + "/" + udid)
-            
+            let userUploadDir = Dir(request.documentRoot + "/" + "uploads/" + type + "/" + sid)
+            //let userUploadDir = Dir(Dir.workingDir.path + "webroot/" + "uploads/" + type + "/" + sid)
+            print("userUploadDir:\(userUploadDir.path)")
             do {
                 try userUploadDir.create()
             } catch {
-                print("#\(type)# create udid:\(udid) upload dir failed:\(error)")
+                print("#\(type)# create sid:\(sid) upload dir failed:\(error)")
                 HttpHandler.responseReq(response: response, returnCode: .failed, errMsg: "create upload file dir error!", data: nil)
                 return
             }
@@ -80,8 +81,13 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
                 let uploadFileName = randomString() + "." + upload.fileName.filePathExtension
 
                 print("💾  save upload file: \(upload.fileName) -> \(uploadFileName)")
-                let _ = try thisFile.moveTo(path: userUploadDir.path + uploadFileName, overWrite: true)
-                let downloadPath = downloadHost + "/" + "download/" + type + "/" + udid + "/" + uploadFileName
+                
+                let userDownloadDir = Dir(request.documentRoot + "/" + "downloads/" + type + "/" + sid)
+                print("userDownloadDir:\(userDownloadDir.path)")
+                try userDownloadDir.create()
+                
+                let _ = try thisFile.moveTo(path: userDownloadDir.path + uploadFileName, overWrite: true)
+                let downloadPath = downloadHost + "/" + "downloads/" + type + "/" + sid + "/" + uploadFileName
                 downloads.append(downloadPath)
             } catch {
                 print(error)

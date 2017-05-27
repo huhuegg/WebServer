@@ -26,41 +26,25 @@ import PerfectWebSockets
 Log.logger = SysLogger()
 
 
-
-// 创建路径用于存储上传文件
-let uploadDir = Dir(Dir.workingDir.path + "uploads")
-do {
-    print("uploadDir:\(uploadDir)")
-    try uploadDir.create()
-    let audioDir = Dir(uploadDir.path + "audio")
-    do {
-        try audioDir.create()
-    } catch {
-        print("create upload audio dir failed:\(error)")
-    }
-} catch {
-    print("create uploads dir failed:\(error)")
-}
-
 // Create HTTP server.
 let server = HTTPServer()
 
 // Register your own routes and handlers
 var routes = Routes()
-routes.add(method: .get, uri: "/error", handler: ErrorMessageHandler.error)
-routes.add(method: .get, uri: "/udid", handler: UDIDHandler.udid)
-routes.add(method: .post, uri: "/noteCreate", handler: NoteHandler.create)
-
-routes.add(method: .post, uri: "/error", handler: ErrorMessageHandler.error)
-
-routes.add(method: .get, uri: "/get", handler: RedisHandler.doGet)
-routes.add(method: .get, uri: "/set", handler: RedisHandler.doSet)
+//routes.add(method: .get, uri: "/error", handler: ErrorMessageHandler.error)
+//routes.add(method: .get, uri: "/udid", handler: UDIDHandler.udid)
+//routes.add(method: .post, uri: "/noteCreate", handler: NoteHandler.create)
+//
+//routes.add(method: .post, uri: "/error", handler: ErrorMessageHandler.error)
+//
+//routes.add(method: .get, uri: "/get", handler: RedisHandler.doGet)
+//routes.add(method: .get, uri: "/set", handler: RedisHandler.doSet)
 
 //静态文件下载
 routes.add(method: .get, uri: "/download/**", handler: DownloadHandler.download)
 //文件上传
 routes.add(method: .post, uri: "/upload", handler: {(request: HTTPRequest, response: HTTPResponse) in
-    print("🌐  \(#function) uri:\(request.uri)")
+    //print("🌐  \(#function) uri:\(request.uri)")
     let webRoot = request.documentRoot
     
     mustacheRequest(request: request, response: response, handler: UploadHandler(), templatePath: webRoot + "/response.mustache")
@@ -84,30 +68,6 @@ routes.add(method: .get, uri: "/testUpload", handler: {(request: HTTPRequest, re
     body += "</body></html>\n"
 
     response.appendBody(string: body)
-    print("📄  testUpload:\(body)")
-    response.completed()
-})
-
-//test js
-routes.add(method: .get, uri: "/pdf.html", handler: {(request: HTTPRequest, response: HTTPResponse) in
-    response.status = .ok //200
-
-    
-    var body = ""
-    body += "<html><body>\n"
-    body += "<script src=\"//mozilla.github.io/pdf.js/build/pdf.js\"></script>\n"
-    body += "<div>\n"
-    body += "<button id=\"prev\">Previous</button>\n"
-    body += "<button id=\"next\">Next</button>\n"
-    body += "&nbsp; &nbsp;\n"
-    body += "<span>Page: <span id=\"page_num\"></span> / <span id=\"page_count\"></span></span>\n"
-    body += "</div>\n"
-    body += "<canvas id=\"the-canvas\"></canvas>\n"
-    body += "<script src=\"t1.js\"></script>\n"
-    body += "</body></html>\n"
-    
-    response.appendBody(string: body)
-    //print("#pdf.html#\n\(body)")
     response.completed()
 })
 
@@ -115,9 +75,7 @@ routes.add(method: .get, uri: "/pdf.html", handler: {(request: HTTPRequest, resp
 //WebSocket
 routes.add(method: .get, uri: "/websocket", handler: {
     request, response in
-    
-    // To add a WebSocket service, set the handler to WebSocketHandler.
-    // Provide your closure which will return your service handler.
+
     WebSocketHandler(handlerProducer: {
         (request: HTTPRequest, protocols: [String]) -> WebSocketSessionHandler? in
         
@@ -125,32 +83,43 @@ routes.add(method: .get, uri: "/websocket", handler: {
         guard protocols.contains("X") else {
             return nil
         }
-        
-        // Return our service handler.
         return WebSocketsHandler()
     }).handleRequest(request: request, response: response)
 })
 
 // Add the routes to the server.
 server.addRoutes(routes)
-
+//server.serverAddress = "192.168.96.104"
 server.serverPort = 10001
 
-// Set a document root.
-// This is optional. If you do not want to serve static content then do not set this.
-// Setting the document root will automatically add a static file handler for the route /**
-server.documentRoot = "./webroot"
+server.documentRoot = "~/webroot"
+
+// 创建文件路径
+let serverDocumentDir = Dir(server.documentRoot)
+let uploadDir = Dir(server.documentRoot + "/uploads")
+let downloadDir = Dir(server.documentRoot + "/downloads")
+do {
+    try serverDocumentDir.create()
+    print("uploadDir:\(uploadDir) downloadDir:\(downloadDir)")
+    for d in [uploadDir,downloadDir] {
+        for subDirName in ["image","audio","video"] {
+            let subDir = Dir(d.path + subDirName)
+            try subDir.create()
+        }
+    }
+} catch {
+    print("create dir failed:\(error)")
+}
+
+
+do {
+    // Launch the HTTP server.
+    try server.start()
+} catch PerfectError.networkError(let err, let msg) {
+    print("Network error thrown: \(err) \(msg)")
+}
 
 // Gather command line options and further configure the server.
 // Run the server with --help to see the list of supported arguments.
 // Command line arguments will supplant any of the values set above.
 configureServer(server)
-
-do {    
-	// Launch the HTTP server.
-	try server.start()
-} catch PerfectError.networkError(let err, let msg) {
-	print("Network error thrown: \(err) \(msg)")
-}
-
-

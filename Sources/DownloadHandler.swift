@@ -16,7 +16,8 @@ class DownloadHandler: HttpHandler {
         request.path = request.urlVariables[routeTrailingWildcardKey]!
         
 
-        let documentRoot = Dir.workingDir.path + "webroot/" + "uploads/"
+        //let documentRoot = Dir.workingDir.path + "webroot/" + "uploads/"
+        let documentRoot = request.documentRoot + "downloads"
         let handler = StaticFileHandler(documentRoot: documentRoot)
         handler.handleRequest(request: request, response: response)
         
