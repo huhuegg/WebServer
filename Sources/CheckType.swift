@@ -102,21 +102,3 @@ class DataTypeCheck {
         return status
     }
 }
-//
-//var data:[String:Any] = Dictionary()
-//
-//data["str"] = "str"
-//let dict1:Dictionary<String,AnyObject> = Dictionary()
-//data["dict1"] = dict1
-//let dict2:Dictionary<String,Any> = Dictionary()
-//data["dict2"] = dict2
-//let arr1:Array<AnyObject> = Array()
-//data["arr1"] = arr1
-//let arr2:Array<Any> = Array()
-//data["arr2"] = arr2
-//data["int"] = 1
-//data["double"] = 1.1
-//data["bool"] = true
-//
-//let status = DataTypeCheck.dataCheck(data, types: ["str":.string, "dict1":.dictStringAny, "dict2":.dictStringAny, "arr1":.arryAny, "arr2":.arryAny, "int":.int, "float":.double, "bool":.bool])
-//print("status:\(status.description)")

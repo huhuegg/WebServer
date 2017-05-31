@@ -109,7 +109,8 @@ extension WS {
             return
         }
         
-        let status = DataTypeCheck.dataCheck(data, types: ["uid":.string, "nickname":.string, "avatar":.string, "online":.bool])
+        let status = DataTypeCheck.dataCheck(data, types: ["sessionId":.string, "uid":.string, "nickname":.string, "avatar":.string, "online":.bool])
+        //let status = DataTypeCheck.dataCheck(data, types: ["uid":.string, "online":.bool])
         if !status {
             printLog("data error! data:\(String(describing: data))")
             sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)

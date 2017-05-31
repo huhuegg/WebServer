@@ -62,10 +62,10 @@ struct UploadHandler: MustachePageHandler { // all template handlers must inheri
                 "fileSize": upload.fileSize,
                 "tmpFileName": upload.tmpFileName
                 ])
-            print("ary:\(ary)")
+            //print("ary:\(ary)")
             let userUploadDir = Dir(request.documentRoot + "/" + "uploads/" + type + "/" + sid)
             //let userUploadDir = Dir(Dir.workingDir.path + "webroot/" + "uploads/" + type + "/" + sid)
-            print("userUploadDir:\(userUploadDir.path)")
+            //print("userUploadDir:\(userUploadDir.path)")
             do {
                 try userUploadDir.create()
             } catch {

@@ -23,7 +23,18 @@ import PerfectHTTPServer
 import PerfectMustache
 import PerfectWebSockets
 
+import PerfectThread
+
 Log.logger = SysLogger()
+
+//connect redis server
+RedisService.instance.initRedis { (isSuccess) in
+    if isSuccess {
+//        print("connect redis ok!")
+    } else {
+//        print("connect redis failed!")
+    }
+}
 
 
 // Create HTTP server.
@@ -100,7 +111,7 @@ let uploadDir = Dir(server.documentRoot + "/uploads")
 let downloadDir = Dir(server.documentRoot + "/downloads")
 do {
     try serverDocumentDir.create()
-    print("uploadDir:\(uploadDir) downloadDir:\(downloadDir)")
+    //print("uploadDir:\(uploadDir) downloadDir:\(downloadDir)")
     for d in [uploadDir,downloadDir] {
         for subDirName in ["image","audio","video"] {
             let subDir = Dir(d.path + subDirName)

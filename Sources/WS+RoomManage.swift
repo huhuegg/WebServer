@@ -45,8 +45,14 @@ extension WS {
                                     userInfo.role = roleId
                                     self.printLog("addUser:\(userInfo.userSid) role:\(roleId) into Room:\(roomSid)")
                                     existRoom.userList.append(userInfo)
+                                    self.redisSetUserRoomSid(userInfo.userSid, roomSid: roomSid, callback: { (setUserRoomStatus) in
+                                    })
+                                    self.redisAddUserToRoom(roomSid, userSid: userInfo.userSid, callback: { (addUserStatus) in
+                                        
+                                    })
                                 }
                                 callback(existRoom)
+                                
                             } else {
                                 self.q.dispatch {
                                     let newRoom = Room()
@@ -58,6 +64,11 @@ extension WS {
                                     callback(newRoom)
                                     self.printLog("create new room:\(roomSid) with user:\(userInfo.userSid)")
                                     self.printLog("after createRoom, rooms count:\(self.rooms.keys.count)")
+                                    self.redisCreateRoomAndAddUser(roomSid, userSid: userInfo.userSid, callback: { (status) in
+                                        self.printLog("redisCreateRoom \(status)")
+                                    })
+                                    self.redisSetUserRoomSid(userInfo.userSid, roomSid: roomSid, callback: { (setUserRoomStatus) in
+                                    })
                                 }
                             }
 
@@ -83,6 +94,12 @@ extension WS {
                                 } else {
                                     callback(false)
                                 }
+                                self.redisRemoveUserFromRoom(roomSid, userSid: u.userSid, callback: { (status) in
+                                    self.printLog("redisRemoveUser \(status)")
+                                })
+                                self.redisRemoveUserRoomSid(u.userSid, callback: { (removeUserRoomSidStatus) in
+                                    
+                                })
                             }
                         } else {
                             self.printLog("removeUserFromRoom failed")
@@ -178,6 +195,13 @@ extension WS {
     private func destroyRoom(_ roomSid:String, callback:@escaping (_ isSuccess:Bool) -> ()) {
         printLog("destroyRoom:\(roomSid)")
         q.dispatch {
+            RedisService.instance.getClient(callback: { (_, client) in
+                let key = "Room_" + roomSid
+                client?.delete(keys: key, callback: { (resp) in
+
+                })
+            })
+            
             if let _ = self.rooms.removeValue(forKey: roomSid) {
                 callback(true)
             } else {

@@ -43,6 +43,14 @@ extension WS {
                 } else {
                     callback(false)
                 }
+                self.userRoom(u.userSid, callback: { (room) in
+                    if let roomSid = room?.sid {
+                        self.leaveRoom(socket, roomSid: roomSid, callback: { (status) in
+
+                        })
+                    }
+                })
+                
             }
         }
 
