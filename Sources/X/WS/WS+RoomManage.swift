@@ -12,6 +12,10 @@ import PerfectHTTP
 
 
 extension WS {
+    func loadFromRedis() {
+        
+    }
+    
     func findRoomIfExist(_ roomSid:String, callback:@escaping (_ room:Room?)->()) {
         q.dispatch {
             if let room = self.rooms[roomSid] {

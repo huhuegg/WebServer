@@ -62,7 +62,7 @@ class RedisService {
                 //print("pingCheckStatus:\(status.description)")
                 self.q.dispatch {
                     if !status {
-                        let t = (getNow() - self.lastActive) / 1000
+                        //let t = (getNow() - self.lastActive) / 1000
                         //print("pingCheck:\(status) now:\(getNow()) lastActive:\(self.lastActive) timeout:\(RedisService.timeout) t:\(t)")
                         if getNow() - self.lastActive > RedisService.timeout * 1000 {
                             print("redis connection timeout, close!")

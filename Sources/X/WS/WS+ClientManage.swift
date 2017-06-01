@@ -99,6 +99,9 @@ extension WS {
                 self.q.dispatch {
                     self.printLog("updateUserInfo success")
                     clientInfo?.userInfo = userInfo
+                    WS.instance.redisUpdateUserInfo(userInfo: userInfo, callback: { (status) in
+                        self.printLog("update redis userInfo -> userSid:\(userInfo.userSid) status:\(status)")
+                    })
                     callback(true)
                 }
             } else {
