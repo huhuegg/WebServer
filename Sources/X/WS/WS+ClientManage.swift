@@ -92,14 +92,14 @@ extension WS {
         }
     }
     
-    func updateUserInfo(_ socket:WebSocket, userInfo:UserInfo, callback:@escaping (_ isSuccess:Bool)->()) {
+    func updateUserInfo(_ socket:WebSocket, userInfo:UserInfo, deviceToken:String?, callback:@escaping (_ isSuccess:Bool)->()) {
         
         clientInfo(socket) { (clientInfo) in
             if let _ = clientInfo {
                 self.q.dispatch {
                     self.printLog("updateUserInfo success")
                     clientInfo?.userInfo = userInfo
-                    WS.instance.redisUpdateUserInfo(userInfo: userInfo, callback: { (status) in
+                    WS.instance.redisUpdateUserInfo(userInfo: userInfo, deviceToken: deviceToken, callback: { (status) in
                         self.printLog("update redis userInfo -> userSid:\(userInfo.userSid) status:\(status)")
                     })
                     callback(true)

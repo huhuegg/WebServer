@@ -24,7 +24,7 @@ extension WS {
         return data
     }
     
-    func redisUpdateUserInfo(userInfo:UserInfo, callback:@escaping (_ isSuccess:Bool)->()) {
+    func redisUpdateUserInfo(userInfo:UserInfo, deviceToken:String?, callback:@escaping (_ isSuccess:Bool)->()) {
         RedisService.instance.getClient { (_, client) in
             guard let c = client else {
                 callback(false)
@@ -32,7 +32,7 @@ extension WS {
             }
             
             let key = self.redisUserInfoKey(userInfo.userSid)
-            let fields = ["sessionId","userSid","nickName","avatarUrl","isOnline","role","desc"]
+            var fields = ["sessionId","userSid","nickName","avatarUrl","isOnline","role","desc"]
             
             let sessionId = RedisClient.RedisValue.string(userInfo.sessionId)
             let userSid = RedisClient.RedisValue.string(userInfo.userSid)
@@ -42,7 +42,12 @@ extension WS {
             let role = RedisClient.RedisValue.string("\(userInfo.role)")
             let desc = RedisClient.RedisValue.string(userInfo.desc)
             
-            let values = [sessionId,userSid,nickName,avatarUrl,isOnline,role,desc]
+            var values = [sessionId,userSid,nickName,avatarUrl,isOnline,role,desc]
+            
+            if let token = deviceToken {
+                fields.append("deviceToken")
+                values.append(RedisClient.RedisValue.string(token))
+            }
             
             guard fields.count == values.count else {
                 callback(false)

@@ -8,10 +8,10 @@
       "version": "2.0.4"
     },
     {
-      "package": "MongoDB",
+      "package": "PerfectCrypto",
       "reason": null,
-      "repositoryURL": "https://github.com/PerfectlySoft/Perfect-MongoDB.git",
-      "version": "2.0.8"
+      "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Crypto.git",
+      "version": "1.0.8"
     },
     {
       "package": "PerfectHTTP",
@@ -47,7 +47,7 @@
       "package": "PerfectNotifications",
       "reason": null,
       "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Notifications.git",
-      "version": "2.0.4"
+      "version": "2.1.3"
     },
     {
       "package": "PerfectRedis",
@@ -72,12 +72,6 @@
       "reason": null,
       "repositoryURL": "https://github.com/SwiftyJSON/SwiftyJSON.git",
       "version": "3.1.4"
-    },
-    {
-      "package": "libmongoc",
-      "reason": null,
-      "repositoryURL": "https://github.com/PerfectlySoft/Perfect-mongo-c.git",
-      "version": "2.0.0"
     }
   ],
   "version": 1

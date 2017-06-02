@@ -89,9 +89,10 @@ routes.add(method: .get, uri: "/websocket", handler: {
 
     WebSocketHandler(handlerProducer: {
         (request: HTTPRequest, protocols: [String]) -> WebSocketSessionHandler? in
-        
+
         // 检查客户端的protocols中是否包含指定内容
         guard protocols.contains("X") else {
+            print("protocols error!")
             return nil
         }
         return WebSocketsHandler()
@@ -107,11 +108,12 @@ server.documentRoot = "~/webroot"
 
 // 创建文件路径
 let serverDocumentDir = Dir(server.documentRoot)
+let apnsDir = Dir(server.documentRoot + "/apns")
 let uploadDir = Dir(server.documentRoot + "/uploads")
 let downloadDir = Dir(server.documentRoot + "/downloads")
 do {
     try serverDocumentDir.create()
-    //print("uploadDir:\(uploadDir) downloadDir:\(downloadDir)")
+    try apnsDir.create()
     for d in [uploadDir,downloadDir] {
         for subDirName in ["image","audio","video"] {
             let subDir = Dir(d.path + subDirName)

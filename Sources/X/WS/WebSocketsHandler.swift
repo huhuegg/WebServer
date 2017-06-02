@@ -20,6 +20,7 @@ class WebSocketsHandler: WebSocketSessionHandler {
     
     // 连接建立后handleSession立即被调用
     func handleSession(request: HTTPRequest, socket: WebSocket) {
+        
         WS.instance.addClientIfNeed(self, request: request, socket: socket) { (isSuccess) in
             
         }

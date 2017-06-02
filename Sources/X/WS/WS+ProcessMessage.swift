@@ -121,13 +121,16 @@ extension WS {
             sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
             return
         }
-        updateUserInfo(socket, userInfo: userInfo) { (isSuccess) in
+        let deviceToken:String? = data?["deviceToken"] as? String
+        updateUserInfo(socket, userInfo: userInfo, deviceToken: deviceToken) { (isSuccess) in
             self.sendMsg(socket, command: respCmd, code: isSuccess, msg: "", data: data)
         }
         
         userRoom(userInfo.userSid) { (room) in
             if let r = room {
-                self.sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: r.sid, data: data)
+                var d = data
+                d?.removeValue(forKey: "deviceToken")
+                self.sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: r.sid, data: d)
             }
         }
 
