@@ -111,16 +111,17 @@ class MysqlService {
         
         let status = mysql.query(statement: sql)
         if let results = mysql.storeResults() {
-            let numRows = results.numRows()
-            let fields = results.numFields()
+            //let numRows = results.numRows()
+            //let fields = results.numFields()
+            
+            var result = Array<Array<String?>>()
             
             while let row = results.next() {
-                row
+                if let r = row as? [String?] {
+                    result.append(r)
+                }
             }
-            
-            results.forEachRow(callback: { (element) in
-                element[0]
-            })
+            callback(status,result)
         }
         callback(status,nil)
     }
