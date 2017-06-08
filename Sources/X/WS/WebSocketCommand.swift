@@ -8,6 +8,9 @@
 
 enum WebSocketCommand: Int {
     case test                       = 0
+    case reqCustom                  = 1000
+    case respCustom                 = 2000
+    case pushCustom                 = 3000
     case reqDeviceAdmin             = 1001
     case respDeviceAdmin            = 2001
     case pushDeviceAdmin            = 3001
@@ -81,10 +84,6 @@ enum WebSocketCommand: Int {
     case respRoomEnd                = 2024
     case pushRoomEnd                = 3024
     case pushKickOff                = 3025
-//    case 129
-//    case 229
-//    case 329
-
 }
 
 

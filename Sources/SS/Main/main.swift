@@ -42,6 +42,7 @@ let server = HTTPServer()
 
 // Register your own routes and handlers
 var routes = Routes()
+routes.add(method: .get, uri: "/listDB", handler: MysqlTestHandler.listDB)
 
 //WebSocket
 routes.add(method: .get, uri: "/ss", handler: {

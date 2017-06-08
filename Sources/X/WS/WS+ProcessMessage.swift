@@ -10,9 +10,20 @@ import PerfectWebSockets
 import PerfectThread
 import PerfectHTTP
 
+enum WSCustomCommandType:Int {
+    case onlyResp                       = 0
+    case respAndPushToRoomStudents      = 1
+    case respAndPushToRoomOtherUsers    = 2
+    case respAndPushToAllRoomUsers      = 3
+    case respAndPushToCustomUser        = 4
+    case respAndPushToRoomTeacher       = 5
+}
+
 extension WS {
     func processRequestMessage(_ socket: WebSocket, command:WebSocketCommand, data:[String:Any]?) {
         switch command {
+        case .reqCustom:
+            reqCustom(socket, cmd: command, data: data)
         case .reqDeviceAdmin:
             reqDeviceAdmin(socket,  cmd:command, data: data)
         case . reqUserAnswerQuestion:
@@ -67,6 +78,50 @@ extension WS {
 
     }
     
+    private func reqCustom(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
+        guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
+            printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
+            return
+        }
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "customCommand":.string, "type":.int, "uid":.string, "json":.string])
+        if !status {
+            printLog("data error! data:\(String(describing: data))")
+            sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
+            return
+        }
+        let roomSid = data?["courseId"] as! String
+        let type = data?["type"] as! Int
+        let userSid = data?["uid"] as! String
+        guard let cmdType = WSCustomCommandType(rawValue: type) else {
+            printLog("unknown command type:\(type)")
+            sendMsg(socket, command: respCmd, code: false, msg: "type error", data: data)
+            return
+        }
+        
+        sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
+        switch cmdType {
+        case .onlyResp:
+            break
+        case .respAndPushToRoomStudents:
+            sendMsgToRoomStudents(socket, command: pushCmd, roomSid: roomSid, data: data)
+            break
+        case .respAndPushToRoomOtherUsers:
+            sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
+            break
+        case .respAndPushToAllRoomUsers:
+            sendMsgToRoomUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
+            break
+        case .respAndPushToCustomUser:
+            sendMsgToUser(userSid, command: pushCmd, data: data, callback: { (_) in
+            })
+            break
+        case .respAndPushToRoomTeacher:
+            sendMsgToRoomTeacher(socket, command: pushCmd, roomSid: roomSid, data: data)
+        default:
+            break
+        }
+        
+    }
     
     private func reqDeviceAdmin(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
         guard let respCmd = commandFor(cmd, isResp: true), let pushCmd = commandFor(cmd, isResp: false) else {
@@ -616,6 +671,30 @@ extension WS {
         }
     }
     
+    fileprivate func sendMsgToRoomTeacher(_ socket:WebSocket, command:WebSocketCommand, roomSid:String, data:[String:Any]?) {
+        roomUsers(socket, roomSid: roomSid) { (userList) in
+            for u in userList {
+                if u.role == 1 {
+                    self.sendMsgToUser(u.userSid, command: command, data: data, callback: { (isSuccess) in
+                        //self.printLog("sendMsgToUser:\(u.userSid) command:\(command) status:\(isSuccess)")
+                    })
+                }
+            }
+        }
+    }
+    
+    fileprivate func sendMsgToRoomStudents(_ socket:WebSocket, command:WebSocketCommand, roomSid:String, data:[String:Any]?) {
+        roomUsers(socket, roomSid: roomSid) { (userList) in
+            for u in userList {
+                if u.role == 3 {
+                    self.sendMsgToUser(u.userSid, command: command, data: data, callback: { (isSuccess) in
+                        //self.printLog("sendMsgToUser:\(u.userSid) command:\(command) status:\(isSuccess)")
+                    })
+                }
+            }
+        }
+    }
+    
     fileprivate func sendMsgToRoomOtherUsers(_ socket:WebSocket, command:WebSocketCommand, roomSid:String, data:[String:Any]?) {
         roomOtherUsers(socket, roomSid: roomSid) { (userList) in
             self.isClientExist(socket, callback: { (clientInfo) in
@@ -683,6 +762,11 @@ extension WS {
     
     fileprivate func commandFor(_ reqCmd:WebSocketCommand, isResp:Bool) -> WebSocketCommand? {
         switch reqCmd {
+        case .reqCustom:
+            if isResp {
+                return .respCustom
+            }
+            return .pushCustom
         case .reqDeviceAdmin:
             if isResp {
                 return .respDeviceAdmin

@@ -24,6 +24,15 @@ import PerfectMustache
 import PerfectWebSockets
 
 import PerfectThread
+import SwiftMD5
+
+#if os(Linux)
+    import LinuxBridge
+#else
+    import Darwin
+#endif
+
+let kWebsocketSubProtocol = "X"
 
 Log.logger = SysLogger()
 
@@ -90,9 +99,38 @@ routes.add(method: .get, uri: "/websocket", handler: {
     WebSocketHandler(handlerProducer: {
         (request: HTTPRequest, protocols: [String]) -> WebSocketSessionHandler? in
 
-        // 检查客户端的protocols中是否包含指定内容
-        guard protocols.contains("X") else {
+        // Convert String to UInt8 bytes
+        func bytesFromString(string: String) -> [UInt8] {
+            return Array(string.utf8)
+        }
+        
+        // Convert UInt8 bytes to String
+        func stringFromBytes(bytes: [UInt8], count: Int) -> String {
+            return String((0..<count).map ({Character(UnicodeScalar(bytes[$0]))}))
+        }
+        
+        
+        // 检查客户端协议是否匹配
+        guard let subProtocol = protocols.first else {
+            print("protocols is nil")
+            return nil
+        }
+        let checkItems = subProtocol.characters.split(separator: "_")
+        guard checkItems.count == 2 else {
             print("protocols error!")
+            return nil
+        }
+        
+        let sessionId = String(checkItems[0])
+        let md5 = String(checkItems[1])
+        
+        let checkStr = sessionId + "_" + kWebsocketSubProtocol
+        let md5sum = SwiftMD5.md5(bytesFromString(string: checkStr)).checksum
+
+        //print("md5:\(md5) md5sum:\(md5sum)")
+        
+        guard md5 == md5sum else {
+            print("protocols checksum error!")
             return nil
         }
         return WebSocketsHandler()
