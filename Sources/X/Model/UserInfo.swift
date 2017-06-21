@@ -14,6 +14,7 @@ class UserInfo {
     var isOnline:Bool = false
     var role:Int = 0
     var desc:String = ""
+    var stars:Int = 0
     
     class func fromDict(_ data:[String:Any]?)-> UserInfo? {
         guard let d = data else {
@@ -32,6 +33,9 @@ class UserInfo {
             if let roleId = d["roleId"] as? Int {
                 userInfo.role = roleId
             }
+            if let starts = d["stars"] as? Int {
+                userInfo.stars = starts
+            }
             return userInfo
         }
 
@@ -45,6 +49,11 @@ class UserInfo {
         dict["avatar"] = self.avatarUrl
         dict["roleId"] = self.role
         dict["desc"] = self.desc
+        dict["stars"] = self.stars
         return dict
+    }
+    
+    func addStars(count:Int) {
+        self.stars += count
     }
 }

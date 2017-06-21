@@ -84,6 +84,8 @@ enum WebSocketCommand: Int {
     case respRoomEnd                = 2024
     case pushRoomEnd                = 3024
     case pushKickOff                = 3025
+    case reqRoomUserList            = 1090
+    case respRoomUserList           = 2090
 }
 
 
