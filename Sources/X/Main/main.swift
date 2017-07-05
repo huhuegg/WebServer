@@ -110,29 +110,29 @@ routes.add(method: .get, uri: "/websocket", handler: {
         }
         
         
-        // 检查客户端协议是否匹配
-        guard let subProtocol = protocols.first else {
-            print("protocols is nil")
-            return nil
-        }
-        let checkItems = subProtocol.characters.split(separator: "_")
-        guard checkItems.count == 2 else {
-            print("protocols error!")
-            return nil
-        }
-        
-        let sessionId = String(checkItems[0])
-        let md5 = String(checkItems[1])
-        
-        let checkStr = sessionId + "_" + kWebsocketSubProtocol
-        let md5sum = SwiftMD5.md5(bytesFromString(string: checkStr)).checksum
-
-        //print("md5:\(md5) md5sum:\(md5sum)")
-        
-        guard md5 == md5sum else {
-            print("protocols checksum error!")
-            return nil
-        }
+//        // 检查客户端协议是否匹配
+//        guard let subProtocol = protocols.first else {
+//            print("protocols is nil")
+//            return nil
+//        }
+//        let checkItems = subProtocol.characters.split(separator: "_")
+//        guard checkItems.count == 2 else {
+//            print("protocols error!")
+//            return nil
+//        }
+//        
+//        let sessionId = String(checkItems[0])
+//        let md5 = String(checkItems[1])
+//        
+//        let checkStr = sessionId + "_" + kWebsocketSubProtocol
+//        let md5sum = SwiftMD5.md5(bytesFromString(string: checkStr)).checksum
+//
+//        //print("md5:\(md5) md5sum:\(md5sum)")
+//        
+//        guard md5 == md5sum else {
+//            print("protocols checksum error!")
+//            return nil
+//        }
         return WebSocketsHandler()
     }).handleRequest(request: request, response: response)
 })

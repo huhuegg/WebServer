@@ -163,7 +163,7 @@ extension WS {
             printLog("reqCmd:\(cmd.rawValue) resp/push command not found! ")
             return
         }
-        
+
         let status = DataTypeCheck.dataCheck(data, types: ["sessionId":.string, "uid":.string, "nickname":.string, "avatar":.string, "online":.bool])
         //let status = DataTypeCheck.dataCheck(data, types: ["uid":.string, "online":.bool])
         if !status {
@@ -321,8 +321,7 @@ extension WS {
         let roomSid = data?["courseId"] as! String
     
         sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
-
+        self.sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data);
     }
     
     private func reqAnswerSubmit(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
@@ -340,7 +339,13 @@ extension WS {
         let roomSid = data?["courseId"] as! String
 
         sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
+        socketUserSid(socket) { (socketOwerUserSid) in
+            var pushData = data;
+            pushData?["uid"] = socketOwerUserSid
+            self.sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: pushData)
+        };
+        
+        
     }
     
     private func reqCreditChange(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
@@ -358,7 +363,11 @@ extension WS {
         let roomSid = data?["courseId"] as! String
         
         sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
-        sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: data)
+        socketUserSid(socket) { (socketOwerUserSid) in
+            var pushData = data;
+            pushData?["uid"] = socketOwerUserSid
+            self.sendMsgToRoomOtherUsers(socket , command: pushCmd, roomSid: roomSid, data: pushData)
+        }
     }
     
     private func reqPlayMediaSynchronously(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
@@ -574,7 +583,8 @@ extension WS {
                     }
                 })
             } else {
-                self.sendMsg(socket, command: respCmd, code: false, msg: "", data: data)
+                self.sendMsg(socket, command: respCmd, code: false, msg: "need load reqUserStatusChange first", data: data)
+                socket.close()
             }
         }
         

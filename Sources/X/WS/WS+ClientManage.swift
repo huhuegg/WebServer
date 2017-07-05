@@ -44,7 +44,9 @@ extension WS {
                     callback(false)
                 }
                 self.userRoom(u.userSid, callback: { (room) in
+                    print("delClient:\(address) room:\(room?.sid)");
                     if let roomSid = room?.sid {
+                        self.printLog("delClient:\(address) leaveRoom:\(roomSid)");
                         self.leaveRoom(socket, roomSid: roomSid, callback: { (status) in
 
                         })
