@@ -64,9 +64,9 @@ var routes = Routes()
 routes.add(method: .get, uri: "/download/**", handler: DownloadHandler.download)
 //文件上传
 routes.add(method: .post, uri: "/upload", handler: {(request: HTTPRequest, response: HTTPResponse) in
-    //print("🌐  \(#function) uri:\(request.uri)")
+    print("🌐  \(#function) uri:\(request.uri)")
     let webRoot = request.documentRoot
-    
+    response.setHeader(HTTPResponseHeader.Name.accessControlAllowOrigin, value: "*");
     mustacheRequest(request: request, response: response, handler: UploadHandler(), templatePath: webRoot + "/response.mustache")
 })
 
@@ -78,6 +78,7 @@ routes.add(method: .get, uri: "/testUpload", handler: {(request: HTTPRequest, re
         return
     }
     
+    
     var body = ""
     body += "<html><body>\n"
     body += "<form action=\"/upload?type=\(type)&sid=\(sid)\" method=\"post\" enctype=\"multipart/form-data\">"
@@ -86,7 +87,7 @@ routes.add(method: .get, uri: "/testUpload", handler: {(request: HTTPRequest, re
     body += "<input type=\"submit\"/>"
     body += "</form>"
     body += "</body></html>\n"
-
+    
     response.appendBody(string: body)
     response.completed()
 })
@@ -140,7 +141,7 @@ routes.add(method: .get, uri: "/websocket", handler: {
 // Add the routes to the server.
 server.addRoutes(routes)
 //server.serverAddress = "192.168.96.104"
-server.serverPort = 10001
+server.serverPort = 10002
 
 server.documentRoot = "~/webroot"
 

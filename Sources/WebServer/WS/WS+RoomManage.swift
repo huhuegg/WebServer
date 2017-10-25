@@ -159,6 +159,48 @@ extension WS {
 
     }
     
+    func checkRoomUsers() {
+        //检查所有房间中的用户连接状态
+        for roomSid in rooms.keys {
+            if let room = rooms[roomSid] {
+                printLog("check room:\(roomSid)")
+                for u in room.userList {
+                    let userSid = u.userSid
+                    
+                    self.userOwnerSocket(userSid, callback: { (socket) in
+                        if socket == nil {
+                            self.printLog("check room:\(roomSid) userSid:\(userSid) failed")
+                            //添加检测统计计数
+                            if let _ = self.needRemoveFromRoomUserInfo[userSid] {
+                                self.needRemoveFromRoomUserInfo[userSid]! += 1
+                            } else {
+                                self.needRemoveFromRoomUserInfo[userSid] = 1
+                            }
+                        } else {
+                            self.printLog("check room:\(roomSid) userSid:\(userSid) ok")
+                        }
+                    })
+                }
+            }
+        }
+        
+        for userSid in self.needRemoveFromRoomUserInfo.keys {
+            if let count = self.needRemoveFromRoomUserInfo[userSid] {
+                //移除错误超过3次的用户
+                if count > 3 {
+                    userRoom(userSid, callback: { (room) in
+                        if let room = room {
+                            self.removeUserFormRoomIfExist(room.sid, userSid: userSid, callback: { (status) in
+                                self.printLog("#Check# remove user:\(userSid) from room:\(room.sid)")
+                            })
+                        }
+                    })
+                    self.needRemoveFromRoomUserInfo.removeValue(forKey: userSid)
+                }
+            }
+        }
+        
+    }
 }
 
 extension WS {

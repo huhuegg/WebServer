@@ -19,7 +19,8 @@ import PerfectThread
 class RedisService {
     static let defaultHost = "127.0.0.1"
     static let defaultPort = redisDefaultPort
-    static let defaultPassword = "RedisService"
+    //static let defaultPassword = "RedisService"
+    static let defaultPassword = ""
     static let timeout:Double = 10
     
     

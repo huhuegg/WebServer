@@ -1,0 +1,142 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "COpenSSL",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-COpenSSL.git",
+        "state": {
+          "branch": null,
+          "revision": "87b6d1f313887fa11bd75e157a3678f066eec981",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "Jobs",
+        "repositoryURL": "https://github.com/BrettRToomey/Jobs.git",
+        "state": {
+          "branch": null,
+          "revision": "2051cc49b64692534225ea9d347051f64ac682ee",
+          "version": "1.1.2"
+        }
+      },
+      {
+        "package": "PerfectCrypto",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Crypto.git",
+        "state": {
+          "branch": null,
+          "revision": "c14a840457bf2c951fbb94a37ed26645e7cc7365",
+          "version": "3.0.1"
+        }
+      },
+      {
+        "package": "PerfectHTTP",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-HTTP.git",
+        "state": {
+          "branch": null,
+          "revision": "2454e72f55145c4efa82805848e962070c7245c3",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "PerfectHTTPServer",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-HTTPServer.git",
+        "state": {
+          "branch": null,
+          "revision": "f493937203568db511425117574487821378eac5",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "PerfectLib",
+        "repositoryURL": "https://github.com/PerfectlySoft/PerfectLib.git",
+        "state": {
+          "branch": null,
+          "revision": "2f1b820a7a091336ee80e2450a5076c1c6d0624d",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "PerfectMustache",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Mustache.git",
+        "state": {
+          "branch": null,
+          "revision": "aed286fa7bea0ab157f8ef640adb1c668bc2729d",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "PerfectMySQL",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-MySQL.git",
+        "state": {
+          "branch": null,
+          "revision": "7c4d7197fb60194cff9d23b7b5ac9b7b5106240b",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "PerfectNet",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Net.git",
+        "state": {
+          "branch": null,
+          "revision": "5e137023e0373b3bdd46a5c80c3ec868fd1c383d",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "PerfectRedis",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Redis.git",
+        "state": {
+          "branch": null,
+          "revision": "d6d161255fda59afb93a71ffdc4a28860115d2ac",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "PerfectThread",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Thread.git",
+        "state": {
+          "branch": null,
+          "revision": "15e3eb947d2465a072c41c9a0bfbefa6c48b34ee",
+          "version": "3.0.1"
+        }
+      },
+      {
+        "package": "PerfectWebSockets",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-WebSockets.git",
+        "state": {
+          "branch": null,
+          "revision": "aabbb88a6471602ca8b551588fc24da8d5cb7de9",
+          "version": "3.0.0"
+        }
+      },
+      {
+        "package": "SwiftMD5",
+        "repositoryURL": "https://github.com/iamjono/SwiftMD5.git",
+        "state": {
+          "branch": null,
+          "revision": "6ebfdc4d8e7c65d9c26480c9533e20b3932af9a3",
+          "version": "1.0.0"
+        }
+      },
+      {
+        "package": "SwiftyJSON",
+        "repositoryURL": "https://github.com/SwiftyJSON/SwiftyJSON.git",
+        "state": {
+          "branch": null,
+          "revision": "6b9f11e2bbd277f199b1c09fa65631bfc52d4a5d",
+          "version": "4.0.0-alpha.1"
+        }
+      },
+      {
+        "package": "mysqlclient",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-mysqlclient.git",
+        "state": {
+          "branch": null,
+          "revision": "51991fc81e40ddef36e8db1868c9b7f1f83d30dc",
+          "version": "2.0.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

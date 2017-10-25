@@ -20,7 +20,7 @@ enum WSCustomCommandType:Int {
 }
 
 extension WS {
-    func processRequestMessage(_ socket: WebSocket, command:WebSocketCommand, data:[String:Any]?) {
+    func processRequestMessage(_ socket: WebSocket, command:WebSocketCommand, data:[String:Any]?, recv:String) {
         switch command {
         case .reqCustom:
             reqCustom(socket, cmd: command, data: data)
@@ -70,12 +70,31 @@ extension WS {
             reqRoomLeave(socket, cmd: command, data: data)
         case .reqRoomStart:
             reqRoomStart(socket, cmd: command, data: data)
+            
         case .reqRoomEnd:
             reqRoomEnd(socket, cmd: command, data: data)
         default:
             print("command:\(command) error")
         }
 
+        //TODO:- 记录request日志
+        self.socketUserSid(socket, callback: { (userSid) in
+            if let userSid = userSid {
+                self.userRoom(userSid, callback: { (room) in
+                    if let room = room {
+                        if command == .reqRoomStart {
+                            let status = self.startLogger(roomId: room.sid)
+                            self.printLog("创建room:\(room.sid)的日志文件, status:\(status.description)")
+                        }
+                        self.log(roomSid: room.sid, wsMsgType: WSMsgType.req, from:userSid, to:["0"], recv: recv)
+                        if command == .reqRoomEnd {
+                            let status = self.stopLogger(roomId: room.sid)
+                            self.printLog("关闭room:\(room.sid)的日志文件, status:\(status.description)")
+                        }
+                    }
+                })
+            }
+        })
     }
     
     private func reqCustom(_ socket: WebSocket, cmd:WebSocketCommand, data:[String:Any]?) {
@@ -112,7 +131,7 @@ extension WS {
             sendMsgToRoomUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
             break
         case .respAndPushToCustomUser:
-            sendMsgToUser(userSid, command: pushCmd, data: data, callback: { (_) in
+            sendMsgToUser(userSid, command: pushCmd, data: data,  callback: { (_) in
             })
             break
         case .respAndPushToRoomTeacher:
@@ -129,7 +148,7 @@ extension WS {
             return
         }
 
-        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "uid":.string, "deviceId":.int, "open":.bool])
+        let status = DataTypeCheck.dataCheck(data, types: ["courseId":.string, "uid":.string, "deviceId":.int, "open":.int])
         if !status {
             printLog("data error! data:\(String(describing: data))")
             sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
@@ -178,7 +197,16 @@ extension WS {
         }
         let deviceToken:String? = data?["deviceToken"] as? String
         updateUserInfo(socket, userInfo: userInfo, deviceToken: deviceToken) { (isSuccess) in
-            self.sendMsg(socket, command: respCmd, code: isSuccess, msg: "", data: data)
+            self.userRoom(userInfo.userSid, callback: { (room) in
+                var newData = data
+                if let room = room {
+                    newData?["roomSid"] = room.sid
+                } else {
+                    newData?["roomSid"] = ""
+                }
+                self.sendMsg(socket, command: respCmd, code: isSuccess, msg: "", data: newData)
+            })
+            
         }
         
         userRoom(userInfo.userSid) { (room) in
@@ -188,6 +216,8 @@ extension WS {
                 self.sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: r.sid, data: d)
             }
         }
+        //清除检测统计计数
+        self.needRemoveFromRoomUserInfo.removeValue(forKey: userInfo.userSid)
 
     }
     
@@ -673,10 +703,26 @@ extension WS {
 extension WS {
     fileprivate func sendMsgToRoomUsers(_ socket:WebSocket, command:WebSocketCommand, roomSid:String, data:[String:Any]?) {
         roomUsers(socket, roomSid: roomSid) { (userList) in
+            var userIds:Array<String> = Array()
             for u in userList {
+                userIds.append(u.userSid)
                 self.sendMsgToUser(u.userSid, command: command, data: data, callback: { (isSuccess) in
                     //self.printLog("sendMsgToUser:\(u.userSid) command:\(command) status:\(isSuccess)")
                 })
+            }
+            //TODO:- 记录Push日志
+            if userIds.count > 0 {
+                var dict:Dictionary<String,Any> = Dictionary()
+                dict[kWebsocketCommandName] = command.rawValue
+                dict[kWebsocketCodeName] = 0
+                dict[kWebsocketMsgName] = ""
+                dict[kWebsocketDataName] = data
+                do {
+                    let message = try dict.jsonEncodedString()
+                    self.log(roomSid: roomSid, wsMsgType: .push, from: "0", to: userIds, recv: message)
+                } catch {
+                    self.printLog("sendMsgToRoomUsers jsonEncode failed")
+                }
             }
         }
     }
@@ -688,6 +734,18 @@ extension WS {
                     self.sendMsgToUser(u.userSid, command: command, data: data, callback: { (isSuccess) in
                         //self.printLog("sendMsgToUser:\(u.userSid) command:\(command) status:\(isSuccess)")
                     })
+                    //TODO:- 记录Push日志
+                    var dict:Dictionary<String,Any> = Dictionary()
+                    dict[kWebsocketCommandName] = command.rawValue
+                    dict[kWebsocketCodeName] = 0
+                    dict[kWebsocketMsgName] = ""
+                    dict[kWebsocketDataName] = data
+                    do {
+                        let message = try dict.jsonEncodedString()
+                        self.log(roomSid: roomSid, wsMsgType: .push, from: "0", to: [u.userSid], recv: message)
+                    } catch {
+                        self.printLog("sendMsgToRoomTeacher jsonEncode failed")
+                    }
                 }
             }
         }
@@ -695,11 +753,27 @@ extension WS {
     
     fileprivate func sendMsgToRoomStudents(_ socket:WebSocket, command:WebSocketCommand, roomSid:String, data:[String:Any]?) {
         roomUsers(socket, roomSid: roomSid) { (userList) in
+            var userIds:Array<String> = Array()
             for u in userList {
                 if u.role == 3 {
+                    userIds.append(u.userSid)
                     self.sendMsgToUser(u.userSid, command: command, data: data, callback: { (isSuccess) in
                         //self.printLog("sendMsgToUser:\(u.userSid) command:\(command) status:\(isSuccess)")
                     })
+                }
+            }
+            //TODO:- 记录Push日志
+            if userIds.count > 0 {
+                var dict:Dictionary<String,Any> = Dictionary()
+                dict[kWebsocketCommandName] = command.rawValue
+                dict[kWebsocketCodeName] = 0
+                dict[kWebsocketMsgName] = ""
+                dict[kWebsocketDataName] = data
+                do {
+                    let message = try dict.jsonEncodedString()
+                    self.log(roomSid: roomSid, wsMsgType: .push, from: "0", to: userIds, recv: message)
+                } catch {
+                    self.printLog("sendMsgToRoomStudents jsonEncode failed")
                 }
             }
         }
@@ -709,11 +783,27 @@ extension WS {
         roomOtherUsers(socket, roomSid: roomSid) { (userList) in
             self.isClientExist(socket, callback: { (clientInfo) in
                 if let ownerUserInfo = clientInfo?.userInfo {
+                    var userIds:Array<String> = Array()
                     for u in userList {
                         if u.userSid != ownerUserInfo.userSid {
+                            userIds.append(u.userSid)
                             self.sendMsgToUser(u.userSid, command: command, data: data, callback: { (isSuccess) in
                                 self.printLog("sendMsgToUser:\(u.userSid) command:\(command) status:\(isSuccess)")
                             })
+                        }
+                    }
+                    //TODO:- 记录Push日志
+                    if userIds.count > 0 {
+                        var dict:Dictionary<String,Any> = Dictionary()
+                        dict[kWebsocketCommandName] = command.rawValue
+                        dict[kWebsocketCodeName] = 0
+                        dict[kWebsocketMsgName] = ""
+                        dict[kWebsocketDataName] = data
+                        do {
+                            let message = try dict.jsonEncodedString()
+                            self.log(roomSid: roomSid, wsMsgType: .push, from: "0", to: userIds, recv: message)
+                        } catch {
+                            self.printLog("sendMsgToRoomOtherUsers jsonEncode failed")
                         }
                     }
                 }
@@ -757,6 +847,18 @@ extension WS {
                         }
                     } else {
                         print("socket clientInfo not found")
+                    }
+                })
+            }
+            //TODO:- 判断是否为resp，是则记录日志
+            if command.rawValue >= 2000 && command.rawValue < 3000 {
+                self.socketUserSid(socket, callback: { (userSid) in
+                    if let userSid = userSid {
+                        self.userRoom(userSid, callback: { (room) in
+                            if let room = room {
+                                self.log(roomSid: room.sid, wsMsgType: WSMsgType.resp, from: "0", to: [userSid], recv: message)
+                            }
+                        })
                     }
                 })
             }

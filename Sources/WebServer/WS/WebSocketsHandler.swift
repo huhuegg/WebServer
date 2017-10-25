@@ -16,7 +16,7 @@ let kWebsocketCodeName = "code"
 let kWebsocketMsgName = "msg"
 class WebSocketsHandler: WebSocketSessionHandler {
     //客户端与服务器协议匹配
-    let socketProtocol: String? = "SS"
+    let socketProtocol: String? = "X"
     
     // 连接建立后handleSession立即被调用
     func handleSession(request: HTTPRequest, socket: WebSocket) {
@@ -24,25 +24,45 @@ class WebSocketsHandler: WebSocketSessionHandler {
         WS.instance.addClientIfNeed(self, request: request, socket: socket) { (isSuccess) in
             
         }
+        
+//        // 收取二进制消息[UInt8]
+//        socket.readBytesMessage { (bytes, op, fin) in
+//            guard let _ = bytes else {
+//                WS.instance.removeClient(socket)
+//                print("socket.close()")
+//                socket.close()
+//                return
+//            }
+////            print("Read data length: \(data.count) op: \(op) fin: \(fin)")
+////            
+////            socket.sendBinaryMessage(bytes: data, final: true, completion: {
+////                
+////            });
+//        }
 
         // 收取文本消息
         socket.readStringMessage {
             // 数据， 消息操作码， 消息是否完整
             string, op, fin in
             // Print some information to the console for informational purposes.
-            //print("Read msg: \(string) op: \(op) fin: \(fin)")
+            print("########Read msg: \(string) op: \(op) fin: \(fin)")
+            
+            if op == .ping {
+                print("receive ping")
+                return
+            }
             
             // 当连接超时或网络错误时数据为nil，以此为依据关闭客户端socket
             if let string = string {
                 do {
                     if let decoded = try string.jsonDecode() as? [String:AnyObject] {
                         if let command = decoded[kWebsocketCommandName] as? String, let data = decoded[kWebsocketDataName] as? [String:Any] {
-                            guard let cmd = WebSocketCommand(rawValue: command) else {
+                            guard let cmd = WebSocketCommand(rawValue: Int(command)!) else {
                                 print("<---Client(\(self.socketMemoryAddress(socket))):command\(command) not found, skip!")
                                 return
                             }
                             print("<---Client(\(self.socketMemoryAddress(socket)))# command:\(cmd) data:\(data)")
-                            WS.instance.processRequestMessage(socket, command: cmd, data: data)
+                            WS.instance.processRequestMessage(socket, command: cmd, data: data, recv: string)
                             
                         } else {
                             print("reqMsg format error: \(string)")
