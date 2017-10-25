@@ -812,7 +812,7 @@ extension WS {
         }
     }
     
-    fileprivate func sendMsgToUser(_ userSid:String, command:WebSocketCommand, data:[String:Any]?, callback:@escaping (_ isSuccess:Bool)->()) {
+    func sendMsgToUser(_ userSid:String, command:WebSocketCommand, data:[String:Any]?, callback:@escaping (_ isSuccess:Bool)->()) {
         self.userOwnerSocket(userSid, callback: { (userSocket) in
             if let _ = userSocket {
                 self.sendMsg(userSocket!, command: command, code: true, msg: "", data: data)

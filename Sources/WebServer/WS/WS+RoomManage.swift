@@ -192,6 +192,17 @@ extension WS {
                         if let room = room {
                             self.removeUserFormRoomIfExist(room.sid, userSid: userSid, callback: { (status) in
                                 self.printLog("#Check# remove user:\(userSid) from room:\(room.sid)")
+                                var data:Dictionary<String,Any> = Dictionary()
+
+                                data["courseId"] = room.sid
+                                data["uid"] = userSid
+
+                                for u in room.userList {
+                                    let command = WebSocketCommand.pushRoomLeave
+                                    self.sendMsgToUser(u.userSid, command: command, data: data, callback: { (isSuccess) in
+                                        self.printLog("sendMsgToUser:\(u.userSid) command:\(command.rawValue) status:\(isSuccess)")
+                                    })
+                                }
                             })
                         }
                     })

@@ -45,13 +45,8 @@ class WebSocketsHandler: WebSocketSessionHandler {
             // 数据， 消息操作码， 消息是否完整
             string, op, fin in
             // Print some information to the console for informational purposes.
-            print("########Read msg: \(string) op: \(op) fin: \(fin)")
-            
-            if op == .ping {
-                print("receive ping")
-                return
-            }
-            
+//            print("########Read msg: \(string) op: \(op) fin: \(fin)")
+      
             // 当连接超时或网络错误时数据为nil，以此为依据关闭客户端socket
             if let string = string {
                 do {
