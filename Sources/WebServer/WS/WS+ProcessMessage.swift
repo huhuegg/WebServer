@@ -82,14 +82,19 @@ extension WS {
             if let userSid = userSid {
                 self.userRoom(userSid, callback: { (room) in
                     if let room = room {
+                        
                         if command == .reqRoomStart {
-                            let status = self.startLogger(roomId: room.sid)
-                            self.printLog("创建room:\(room.sid)的日志文件, status:\(status.description)")
+                            //roomStart，开始记录日志
+                            self.isRoomLogStarted[room.sid] = true
+                            self.printLog("room:\(room.sid)开始记录日志")
                         }
+
                         self.log(roomSid: room.sid, wsMsgType: WSMsgType.req, from:userSid, to:["0"], recv: recv)
                         if command == .reqRoomEnd {
+                            self.isRoomLogStarted[room.sid] = false
                             let status = self.stopLogger(roomId: room.sid)
                             self.printLog("关闭room:\(room.sid)的日志文件, status:\(status.description)")
+                            self.isRoomLogStarted.removeValue(forKey: room.sid)
                         }
                     }
                 })
@@ -195,6 +200,17 @@ extension WS {
             sendMsg(socket, command: respCmd, code: false, msg: "data error!", data: data)
             return
         }
+        
+        if let data = data {
+            if let sessionId = data["sessionId"] as? String {
+                if sessionId != "" {
+                    UserManager.shared.saveUserInfo(sessionId: sessionId, userInfo: userInfo, callback: {
+                        
+                    })
+                }
+            }
+        }
+        
         let deviceToken:String? = data?["deviceToken"] as? String
         updateUserInfo(socket, userInfo: userInfo, deviceToken: deviceToken) { (isSuccess) in
             self.userRoom(userInfo.userSid, callback: { (room) in
@@ -672,7 +688,10 @@ extension WS {
             return
         }
         let roomSid = data?["courseId"] as! String
-        
+        if let course = CourseManager.shared.findCourse(courseId: roomSid) {
+            course.status = .ing
+            CourseManager.shared.changeStatus(course: course)
+        }
         sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
         
         sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)
@@ -692,7 +711,10 @@ extension WS {
             return
         }
         let roomSid = data?["courseId"] as! String
-        
+        if let course = CourseManager.shared.findCourse(courseId: roomSid) {
+            course.status = .end
+            CourseManager.shared.changeStatus(course: course)
+        }
         sendMsg(socket, command: respCmd, code: true, msg: "", data: data)
         
         sendMsgToRoomOtherUsers(socket, command: pushCmd, roomSid: roomSid, data: data)

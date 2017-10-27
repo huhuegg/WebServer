@@ -8,6 +8,10 @@
 
 import PerfectHTTP
 
+enum XReturnStatus:String {
+    case succeed = "succeed"
+    case failed = "failed"
+}
 class HttpHandler:NetworkHandler {
     class func valueForKey(request:HTTPRequest, key:String) -> String? {
         if request.method == .get {
@@ -38,6 +42,24 @@ class HttpHandler:NetworkHandler {
         var bodyDict:Dictionary<String,Any> = data == nil ? Dictionary():data!
         bodyDict["code"] = returnCode.rawValue
         bodyDict["msg"] = errMsg
+        var bodyJson = ""
+        do {
+            bodyJson = try bodyDict.jsonEncodedString()
+        } catch _ {
+        }
+        response.appendBody(string: bodyJson)
+        print("📄  responseBody:\(bodyJson)")
+        response.completed()
+    }
+    
+    class func responseXReq(response: HTTPResponse, status:XReturnStatus, errMsg:String, data:Dictionary<String,Any>?) {
+        response.setHeader(.contentType, value: "application/json")
+        response.status = .ok //200
+        
+        var bodyDict:Dictionary<String,Any> = data == nil ? Dictionary():data!
+        bodyDict["status"] = status.rawValue
+        bodyDict["message"] = errMsg
+        bodyDict["data"] = data
         var bodyJson = ""
         do {
             bodyJson = try bodyDict.jsonEncodedString()

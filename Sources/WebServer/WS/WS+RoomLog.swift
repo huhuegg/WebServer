@@ -20,8 +20,11 @@ extension WS {
         let filePath = logDir + "/" + roomId
         let f:File = File(filePath)
         do {
-            try f.open(.append, permissions: .rwUserGroup)
+            try f.open(.write, permissions: .rwUserGroup)
             roomLogger[roomId] = f
+            let currectTimeInterval = Date().timeIntervalSince1970
+            //let msg = String(currectTimeInterval) + "\n"
+            //try f.write(string: msg)
             return true
         } catch {
             return false
@@ -41,22 +44,30 @@ extension WS {
     func log(roomSid:String, wsMsgType: WSMsgType, from:String, to:Array<String>, recv: String) {
         let currectTimeInterval = Date().timeIntervalSince1970
 
-        var dict:[String:Any] = Dictionary()
-        dict["type"] = wsMsgType.rawValue
-        dict["from"] = from
-        dict["to"] = to
-        dict["data"] = recv
-        do {
-            if let file = roomLogger[roomSid] {
-                let s = try dict.jsonEncodedString()
-                let msg = String(currectTimeInterval) + s + "\n"
-                try file.write(string: msg)
+        if let status = self.isRoomLogStarted[roomSid] {
+            if status == true {
+                var dict:[String:Any] = Dictionary()
+                dict["type"] = wsMsgType.rawValue
+                dict["from"] = from
+                dict["to"] = to
+                dict["data"] = recv
+                do {
+                    if let file = roomLogger[roomSid] {
+                        let s = try dict.jsonEncodedString()
+                        let msg = String(currectTimeInterval) + s + "\n"
+                        try file.write(string: msg)
+                    } else {
+                        self.printLog("记录日志失败")
+                    }
+                } catch {
+                    self.printLog("log encodeJsonString failed")
+                }
             } else {
-                self.printLog("未开始上课，或记录日志失败")
+                self.printLog("未开始上课，忽略")
             }
-        } catch {
-            self.printLog("log encodeJsonString failed")
         }
+        
+        
         
     }
 

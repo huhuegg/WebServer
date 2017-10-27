@@ -51,14 +51,12 @@ let server = HTTPServer()
 
 // Register your own routes and handlers
 var routes = Routes()
-//routes.add(method: .get, uri: "/error", handler: ErrorMessageHandler.error)
-//routes.add(method: .get, uri: "/udid", handler: UDIDHandler.udid)
-//routes.add(method: .post, uri: "/noteCreate", handler: NoteHandler.create)
-//
-//routes.add(method: .post, uri: "/error", handler: ErrorMessageHandler.error)
-//
-//routes.add(method: .get, uri: "/get", handler: RedisHandler.doGet)
-//routes.add(method: .get, uri: "/set", handler: RedisHandler.doSet)
+//设置角色
+routes.add(method: .post, uri: "/setRole", handler: XHandler.setRole)
+routes.add(method: .post, uri: "/getRole", handler: XHandler.getRole)
+routes.add(method: .post, uri: "/createCourse", handler: XHandler.createCourse)
+routes.add(method: .post, uri: "/courseList", handler: XHandler.courseList)
+
 
 //静态文件下载
 routes.add(method: .get, uri: "/download/**", handler: DownloadHandler.download)

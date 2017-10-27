@@ -9,7 +9,7 @@
 import PerfectWebSockets
 import PerfectThread
 import PerfectHTTP
-
+import Foundation
 
 extension WS {
     func loadFromRedis() {
@@ -65,6 +65,11 @@ extension WS {
                                     userInfo.role = roleId
                                     newRoom.userList.append(userInfo)
                                     self.rooms[roomSid] = newRoom
+                                    
+                                    let status = self.startLogger(roomId: roomSid)
+                                    self.isRoomLogStarted[roomSid] = false
+                                    self.printLog("创建room:\(roomSid)的日志文件, status:\(status.description)")
+                                    
                                     callback(newRoom)
                                     self.printLog("create new room:\(roomSid) with user:\(userInfo.userSid)")
                                     self.printLog("after createRoom, rooms count:\(self.rooms.keys.count)")
@@ -73,6 +78,7 @@ extension WS {
                                     })
                                     self.redisSetUserRoomSid(userInfo.userSid, roomSid: roomSid, callback: { (setUserRoomStatus) in
                                     })
+                                    
                                 }
                             }
 
@@ -164,6 +170,26 @@ extension WS {
         for roomSid in rooms.keys {
             if let room = rooms[roomSid] {
                 printLog("check room:\(roomSid)")
+                //TODO:-超过预定课程结束时间并且房间已经没有人则销毁房间
+                if let course = CourseManager.shared.findCourseWithStatus(courseId: roomSid, status:.ing) {
+                    let endTime:Int = Int(course.starttime) + course.duration * 60
+                    let currectTime:Int = Int(Date().timeIntervalSince1970)
+                    self.printLog("[ing] roomSid:\(roomSid) currentTime:\(currectTime) endTime:\(endTime) roomUsers:\(room.userList.count)")
+                    if currectTime >= endTime { //超过预定课程结束时间
+                        if room.userList.count == 0 { //房间已经没有人
+                            course.status = .end
+                            //将课程标记为已结束
+                            CourseManager.shared.changeStatus(course: course)
+                            //销毁房间
+                            self.destroyRoom(roomSid, callback: { (isSuccess) in
+                            })
+                            self.printLog("[ing] roomSid:\(roomSid) destroy room and end.")
+                            continue
+                        }
+                    }
+                }
+                
+                
                 for u in room.userList {
                     let userSid = u.userSid
                     
@@ -231,10 +257,7 @@ extension WS {
                     self.q.dispatch {
                         self.printLog("remove user:\(userSid) from room:\(roomSid)")
                         room.userList.remove(at: userIndex)
-                        if room.userList.count == 0 {
-                            self.destroyRoom(roomSid, callback: { (isSuccess) in
-                            })
-                        }
+                        
                         callback(true)
                     }
                 } else {

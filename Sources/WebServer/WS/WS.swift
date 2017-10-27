@@ -34,6 +34,7 @@ class WS {
     var rooms:Dictionary<String,Room> = Dictionary()
     var userInRoom:Dictionary<String,String> = Dictionary()
     var roomLogger:Dictionary<String,File> = Dictionary()
+    var isRoomLogStarted:Dictionary<String,Bool> = Dictionary()
     var needRemoveFromRoomUserInfo:Dictionary<String,Int> = Dictionary()
     
     let q = Threading.getQueue(name: "#WebSocket Thread#", type: Threading.QueueType.serial)

@@ -6,6 +6,8 @@
 //
 //
 
+import SwiftyJSON
+
 class UserInfo {
     var sessionId:String = ""
     var userSid:String = ""
@@ -55,5 +57,20 @@ class UserInfo {
     
     func addStars(count:Int) {
         self.stars += count
+    }
+    
+    class func fromNetworkSessionInfoDict(_ data:[String:Any]?)-> UserInfo? {
+        guard let d = data else {
+            print("userInfo data is nil")
+            return nil
+        }
+        if let uid = d["uid"] as? String {
+            let userInfo = UserInfo()
+            userInfo.userSid = uid
+            return userInfo
+        } else {
+            print("fromNetworkSessionInfoDict  uid not found")
+            return nil
+        }
     }
 }
